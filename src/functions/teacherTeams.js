@@ -29,7 +29,7 @@ app.http('teacherTeams', {
           throw new Error(`Was not able to get the company name for user with upn ${request.params.upn}`)
         }
         // Get the locations the user is permitted to see
-        const permittedLocations = await getPermittedLocations(requestor.companyName)
+        const permittedLocations = await getPermittedLocations(user.companyName)
         const permittedLocationNames = permittedLocations.map(location => location.name)
 
         // Check if the user is permitted to see the requested teams
