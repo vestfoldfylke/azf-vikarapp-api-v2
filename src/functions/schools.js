@@ -15,10 +15,10 @@ app.http('schools', {
     let requestor
     // Make sure all the required properties are provided
     ({ requestor } = await prepareRequest(request))
-
+    const validRoles = ['App.Config', 'App.Admin']
     const requestBody = await request.text()
     // Make sure the requestor has the correct role (App.Config)
-    if (!requestor.roles?.includes('App.Config')) {
+    if (!requestor.roles?.some((roles) => validRoles.includes(roles))) {
       logger('warn', [logPrefix, 'Unauthorized. The requestor does not have the required role to perform this action.', `Requestor: ${requestor.name} (${requestor.id})`, `Roles: ${requestor.roles?.join(', ')}`])
       throw new Error('Unauthorized. You do not have the required role to perform this action.')
     }
