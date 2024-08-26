@@ -78,11 +78,13 @@ const deactivateSubstitutions = async (onlyFirst = false, substitutions, request
     }
   }
   // Create statistics for the deactivated substitutions
-  logger('info', [logPrefix, 'Create statistics for the deactivated substitutions'])
-  for (const stat of stats) {
-    await createStats(stat)
+  if (responses.length > 0) {
+    logger('info', [logPrefix, 'Create statistics for the deactivated substitutions'])
+    for (const stat of stats) {
+      await createStats(stat)
+    }
   }
-
+ 
   // Log the substitutions to the db
   logger('info', [logPrefix, `Deactivated '${responses.length}' substitutions`])
   await logToDB('info', { message: `Deactivated '${responses.length}' substitutions`,  substitutions: responses }, request, context)
