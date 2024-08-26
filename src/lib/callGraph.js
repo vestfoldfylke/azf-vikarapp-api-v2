@@ -30,7 +30,7 @@ const searchUsersInGroup = async (searchTerm, groupId, requestor, returnSelf) =>
 
   // Prepare the request
   const request = {
-    metod: 'get',
+    method: 'get',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${await getAccessToken(azureApplication.scope)}`,
@@ -44,6 +44,7 @@ const searchUsersInGroup = async (searchTerm, groupId, requestor, returnSelf) =>
   if (data?.value) data = data.value
 
   // If not should not return self
+  console.log(data)
   if (!returnSelf) data = data.filter((i) => i.userPrincipalName !== requestor.upn)
 
   return data
@@ -55,7 +56,7 @@ const getOwnedObjects = async (upn) => {
 
   // Prepare the request
   const request = {
-    metod: 'get',
+    method: 'get',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${await getAccessToken(azureApplication.scope)}`,
@@ -77,7 +78,7 @@ const getGroups = async (id) => {
 
   // Prepare the request
   const request = {
-    metod: 'get',
+    method: 'get',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${await getAccessToken(azureApplication.scope)}`,
@@ -99,7 +100,7 @@ const getGroupOwners = async (id) => {
 
   // Prepare the request
   const request = {
-    metod: 'get',
+    method: 'get',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${await getAccessToken(azureApplication.scope)}`,
@@ -121,7 +122,7 @@ const getGroupMembers = async (id) => {
 
   // Prepare the request
   const request = {
-    metod: 'get',
+    method: 'get',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${await getAccessToken(azureApplication.scope)}`,
@@ -159,7 +160,7 @@ const addGroupOwner = async (groupId, userId) => {
 
   // Prepare the request
   const request = {
-    metod: 'post',
+    method: 'post',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${await getAccessToken(azureApplication.scope)}`,
@@ -173,7 +174,7 @@ const addGroupOwner = async (groupId, userId) => {
 
   // Make the request
   const { data } = await axios.request(request)
-
+  console.log(data)
   return data
 }
 
@@ -184,7 +185,7 @@ const removeGroupOwner = async (groupId, userId) => {
 
   // Prepare the request
   const request = {
-    metod: 'delete',
+    method: 'delete',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${await getAccessToken(azureApplication.scope)}`,
@@ -206,7 +207,7 @@ const removeGroupMember = async (groupId, userId) => {
 
   // Prepare the request
   const request = {
-    metod: 'delete',
+    method: 'delete',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${await getAccessToken(azureApplication.scope)}`,
@@ -227,7 +228,7 @@ const getAdditionalRequestorInfo = async (requestor) => {
 
   // Prepare the request
   const request = {
-    metod: 'get',
+    method: 'get',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${await getAccessToken(azureApplication.scope)}`
