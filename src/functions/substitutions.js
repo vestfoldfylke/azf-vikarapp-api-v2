@@ -7,6 +7,7 @@ const { getPermittedLocations } = require('../lib/jobs/getPermittedLocations')
 const { activateSubstitutions, deactivateSubstitutions } = require('../lib/jobs/graphJobs')
 const { prepareRequest } = require('../lib/auth/requestor')
 const { mongoDB } = require('../../config')
+const { ObjectId } = require('mongodb')
 
 app.http('substitutions', {
   methods: ['GET', 'POST', 'PUT'],
@@ -119,7 +120,6 @@ app.http('substitutions', {
       // Define the filter
       logger('info', [logPrefix, 'Define the filter'])
       let filter = []
-      console.log(status, teacherUpn, substituteUpn, years)
       if (status) filter.push({ status })
       if (teacherUpn) filter.push({ teacherUpn })
       if (substituteUpn) filter.push({ substituteUpn })
@@ -157,7 +157,6 @@ app.http('substitutions', {
     } else if (request.method === 'POST') {
       logPrefix = 'substitutions - post'
       // Get all the unique substitutions and the teacher UPNS from the request body
-
       const uniqueSubstituteUpns = [...new Set(requestBody.map(i => i.substituteUpn))]
       const uniqueTeacherUpns = [...new Set(requestBody.map(i => i.teacherUpn))]
 
@@ -178,7 +177,10 @@ app.http('substitutions', {
         }
 
         // Check if the substitute is admin. If not, get the substitutes permittedLocations
+        console.log(requestor.roles)
         if (!requestor.roles.includes('App.Admin')) {
+          logger('info', [logPrefix, `Check if the substitute ${upn} has the required permissions to substitute for the teacher`])
+          // console.log(substitute.permittedLocations)
           substitute.permittedLocations = await getPermittedLocations(substitute.companyName)
           if (!substitute.permittedLocations || !Array.isArray(substitute.permittedLocations) || substitute.permittedLocations.length === 0) {
             logger('error', [logPrefix, `Substitute ${upn} does not have any permitted locations`])
@@ -216,14 +218,32 @@ app.http('substitutions', {
       }
 
       // Create the database entry for creating/renewing the substitutions
-      const expirationTimestamp = new Date(new Date().setHours(1, 0, 0, 0) + (2 * 24 * 60 * 60 * 1000)) // 2 days from now, at 01:00.
+      const expirationTimestamp = new Date(new Date().setHours(1, 0, 0, 0) + (3 * 24 * 60 * 60 * 1000)) // 2 days from now, at 01:00.
       const newSubstitutions = [] // The new substitutions to be created
-      const renewedSubstitutions = [] // The substitutions that are renewed
-
+      const renewedSubstitutions = [] // The substitutions that are extended from active
+      const renewedExpiredSubstitutions = [] // The substitutions that are renewed from expired
       try {
         // Loop through the request body
         /* eslint no-unreachable-loop: ["error", { "ignore": ["ForOfStatement"] }] */
         for (const substitution of requestBody) {
+          let newSubstitutionsObj = {
+            _id: '',
+            status: 'pending',
+            teacherId: '',
+            teacherName: '',
+            teacherUpn: '',
+            substituteId: '',
+            substituteName: '',
+            substituteUpn: '',
+            teamId: '',
+            teamName: '',
+            teamEmail: '',
+            teamSdsId: '',
+            substitutionUpdated: 0,
+            expirationTimestamp: '',
+            createdTimestamp: new Date(),
+          }
+
           // Get the substitute and teacher
           const substitute = substitutes.find(i => i.userPrincipalName === substitution.substituteUpn)
           const teacher = teachers.find(i => i.userPrincipalName === substitution.teacherUpn)
@@ -253,7 +273,7 @@ app.http('substitutions', {
             logger('error', [logPrefix, `The teacher ${teacher.userPrincipalName} does not own the requested team ${substitution.teamId}`])
             throw new Error(`The teacher ${teacher.userPrincipalName} does not own the requested team ${substitution.teamId}`)
           }
-          if (!team['@odata.type'] || team['@odata.type'] !== '#microsoft.graph.Group') {
+          if (!team['@odata.type'] || team['@odata.type'].toLowerCase() !== '#microsoft.graph.group') {
             logger('error', [logPrefix, `The requested team ${substitution.teamId} is not a valid team`])
             throw new Error(`The requested team ${substitution.teamId} is not a valid team`)
           }
@@ -262,14 +282,21 @@ app.http('substitutions', {
             throw new Error(`The requested team ${substitution.teamId} is not a school team`)
           }
 
-          // Check if the substition is currently active and should be renewed
-          logger('info', [logPrefix, 'Check if the substition is currently active and should be renewed'])
-          const existingSubstitution = substitute.substitutions?.find((i) => i.teamId === substitution.teamId && i.status !== 'expired')
-
-          if (existingSubstitution) {
+          // Check if the substition is currently active and should be renewed, else create a new substitution
+          logger('info', [logPrefix, 'Check if the substition is currently active and should only be renewed else create a new substitution'])
+          if (substitution.status === 'active') {
+            logger('info', [logPrefix, 'The substitution is currently active and should be renewed'])
             renewedSubstitutions.push({
-              _id: existingSubstitution._id,
+              extendedSubstitution: {...substitution},
+              _id: substitution._id, // Document ID from mongoDB
               expirationTimestamp
+            })
+          } else if (substitution.status === 'expired') {
+            logger('info', [logPrefix, 'The substitution is currently expired and should be renewed'])
+            renewedExpiredSubstitutions.push({
+              expiredSubstitution: {...substitution},
+              _id: substitution._id, // Document ID from mongoDB
+              expirationTimestamp,
             })
           } else {
             // If we enable School data sync, we can get the school id from the team mail. Unusable for now.
@@ -280,47 +307,97 @@ app.http('substitutions', {
 
             // Create the new substitution
             logger('info', [logPrefix, 'Create the new substitution'])
-            newSubstitutions.push({
-              status: 'pending',
-              teacherId: teacher.id,
-              teacherName: teacher.displayName,
-              teacherUpn: teacher.userPrincipalName,
-              substituteId: substitute.id,
-              substituteName: substitute.displayName,
-              substituteUpn: substitute.userPrincipalName,
-              teamId: team.id,
-              teamName: team.displayName,
-              teamEmail: team.mail,
-              teamSdsId,
-              expirationTimestamp
-            })
+            // Create the new substitution object
+            newSubstitutionsObj._id = new ObjectId()
+            newSubstitutionsObj.teacherId = teacher.id
+            newSubstitutionsObj.teacherName = teacher.displayName
+            newSubstitutionsObj.teacherUpn = teacher.userPrincipalName
+            newSubstitutionsObj.substituteId = substitute.id
+            newSubstitutionsObj.substituteName = substitute.displayName
+            newSubstitutionsObj.substituteUpn = substitute.userPrincipalName
+            newSubstitutionsObj.teamId = team.id
+            newSubstitutionsObj.teamName = team.displayName
+            newSubstitutionsObj.teamEmail = team.mail
+            newSubstitutionsObj.teamSdsId = teamSdsId
+            newSubstitutionsObj.expirationTimestamp = expirationTimestamp
+
+            newSubstitutions.push(newSubstitutionsObj)
           }
-          
-
-          // Make the request to the database
-          let documents = [] // The documents to be returned
-          if (newSubstitutions.length > 0) {
-            // Insert the new substitutions
-            logger('info', [logPrefix, 'Insert the new substitutions'])
-            const result = await mongoClient.db(mongoDB.DB_NAME).collection(mongoDB.SUBSTITUTIONS_COLLECTION).insertMany(newSubstitutions)
-            documents = [...result]
-          }
-          for (const renewal of renewedSubstitutions) {
-            // Update the renewed substitutions
-            logger('info', [logPrefix, 'Update the renewed substitutions'])
-            const result = await mongoClient.db(mongoDB.DB_NAME).collection(mongoDB.SUBSTITUTIONS_COLLECTION).findOneAndUpdate({ _id: renewal._id }, renewal, { new: true })
-            documents = [...documents, result]
-          }
-
-          // Make the request to activate the substitutions in the database
-          await activateSubstitutions(false, request, context)
-
-          // Log the request to the database
-          await logToDB('info', documents, request, context, requestor)
-
-          // Return the documents
-          return { status: 201, jsonBody: documents }
         }
+        
+        // Make the request to the database
+        let documents = [] // The documents to be returned
+        if (newSubstitutions.length > 0) {
+          for (const newSubstitution of newSubstitutions) {
+            try {
+              // Insert the new substitutions
+              logger('info', [logPrefix, 'Insert the new substitutions'])
+              const result = await mongoClient.db(mongoDB.DB_NAME).collection(mongoDB.SUBSTITUTIONS_COLLECTION).insertOne(newSubstitution)
+              documents.push(result)
+              try {
+                // Make the request to activate the substitutions in the database
+                await activateSubstitutions(false, request, context)
+                await logToDB('info', newSubstitution, request, context, requestor)
+              } catch (error) {
+                logger('error', [logPrefix, 'An error occured while trying to activate the substitutions or create logentry in the database', error])
+                await logToDB('error', error, request, context, requestor)
+                return { status: 404, jsonBody: JSON.stringify({ error: error?.message || error })}
+              }
+            } catch (error) {
+              logger('error', [logPrefix, 'An error occured while trying to Insert the new substitutions into the DB', error])
+              await logToDB('error', error, request, context, requestor)
+              return { status: 404, jsonBody: JSON.stringify({ error: error?.message || error }) } 
+            }
+          }
+        }
+        // Update the renewed substitutions
+        for (const renewal of renewedSubstitutions) {
+          try {
+            // Update the renewed substitutions
+            logger('info', [logPrefix, 'Update the renewed substitutions expirationTimestamp'])
+            const result = await mongoClient.db(mongoDB.DB_NAME).collection(mongoDB.SUBSTITUTIONS_COLLECTION).updateOne({ _id: new ObjectId(renewal._id) }, { $set: { expirationTimestamp: renewal.expirationTimestamp, updatedTimestamp: new Date()}, $inc: { substitutionUpdated: 1 } })
+            documents = [...documents, result]
+
+            try {
+              // Logg action to the database
+              await logToDB('info', renewal, request, context, requestor)
+            } catch (error) {
+              logger('error', [logPrefix, 'An error occured while trying to activate the substitutions or create logentry in the database', error])
+              await logToDB('error', error, request, context, requestor)
+              return { status: 404, jsonBody: JSON.stringify({ error: error?.message || error })}
+            }
+          } catch (error) {
+            logger('error', [logPrefix, 'An error occured while trying to Update the renewed substitutions in the DB', error])
+            await logToDB('error', error, request, context, requestor)
+            return { status: 404, jsonBody: JSON.stringify({ error: error?.message || error })} 
+          }
+        }
+
+        // Update the renewed substitutions
+        for (const renewal of renewedExpiredSubstitutions) {
+          try {
+            // Update the renewed substitutions
+            logger('info', [logPrefix, 'Update the expired substitutions to pending'])
+            const result = await mongoClient.db(mongoDB.DB_NAME).collection(mongoDB.SUBSTITUTIONS_COLLECTION).updateOne({ _id: new ObjectId(renewal._id) }, { $set: { expirationTimestamp: renewal.expirationTimestamp, updatedTimestamp: new Date(), status: 'pending' }, $inc: { substitutionUpdated: 1 } })
+            documents = [...documents, result]
+            try {
+              // Make the request to activate the substitutions in the database
+              await activateSubstitutions(false, request, context)
+              await logToDB('info', renewal, request, context, requestor)
+            } catch (error) {
+              logger('error', [logPrefix, 'An error occured while trying to activate the substitutions or create logentry in the database', error])
+              await logToDB('error', error, request, context, requestor)
+              return { status: 404, jsonBody: JSON.stringify({ error: error?.message || error })}
+            }
+          } catch (error) {
+            logger('error', [logPrefix, 'An error occured while trying to Update the renewed substitutions in the DB', error])
+            await logToDB('error', error, request, context, requestor)
+            return { status: 404, jsonBody: JSON.stringify({ error: error?.message || error })} 
+          }
+        }
+  
+        // Return the documents
+        return { status: 201, jsonBody: documents }
       } catch (error) {
         logger('error', [logPrefix, 'An error occured while trying to create the substitutions', error])
         await logToDB('error', error, request, context, requestor)
