@@ -9,7 +9,7 @@ const { searchGroupId } = require('../../config')
 app.http('teachers', {
   methods: ['GET'],
   authLevel: 'anonymous',
-  route: 'teachers/{searchTerm}',
+  route: 'teachers/{searchTerm}/{returnSelf?}',
   handler: async (request, context) => {
     const logPrefix = 'teachers'
     let requestor
@@ -28,22 +28,23 @@ app.http('teachers', {
         logger('error', [logPrefix, 'No search term provided'])
         throw new Error('No search term provided')
       }
+      // Get the returnSelf from the request, either true or false
+      const { returnSelf } = request.params
 
       // Do the search
-      let users = await searchUsersInGroup(searchTerm, searchGroupId, requestor, request.query?.returnSelf)
-
+      let users = await searchUsersInGroup(searchTerm, searchGroupId, requestor, returnSelf)
       // Check if the user is not admin, and filter out locations that the user is not permitted to see
       if (!requestor.roles.includes('App.Admin')) {
         // Get the locations the user is permitted to see
         const permittedLocations = await getPermittedLocations(requestor.company)
         // Filter out locations the user is not permitted to see, if the user has no permitted locations, return an empty array
-        if (!permittedLocations || Array.isArray(permittedLocations) || permittedLocations.length === 0) {
+        if (!permittedLocations || permittedLocations.length === 0) {
           logger('warn', [logPrefix, `User with upn ${requestor.upn} is not permitted to see any locations`])
           users = []
         } else {
           // Filter out the users that are not part of the permitted locations
           const permittedLocationNames = permittedLocations.map(location => location.name)
-          users = users.filter(user => permittedLocationNames.includes(user.comapnyName))
+          users = users.filter(user => permittedLocationNames.includes(user.companyName))
         }
       }
 
