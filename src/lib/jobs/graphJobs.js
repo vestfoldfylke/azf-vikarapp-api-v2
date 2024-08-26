@@ -85,7 +85,7 @@ const deactivateSubstitutions = async (onlyFirst = false, substitutions, request
 
   // Log the substitutions to the db
   logger('info', [logPrefix, `Deactivated '${responses.length}' substitutions`])
-  await logToDB('info', { message: `Deactivated '${responses.length}' substitutions`, substitutions: responses }, request, context)
+  await logToDB('info', { message: `Deactivated '${responses.length}' substitutions`,  substitutions: responses }, request, context)
 
   // Return the responses
   return responses
@@ -133,10 +133,15 @@ const activateSubstitutions = async (onlyFirst = false, request, context) => {
 
       // Add the substitute as owner to the team
       logger('info', [logPrefix, 'Add the substitute as owner to the team'])
-      await addGroupOwner(substition.teamId, substition.substituteId)
+      try {
+        await addGroupOwner(substition.teamId, substition.substituteId)
+      } catch (error) {
+        logger('error', [logPrefix, 'An error occured while trying to add the substitute as owner to the team', error])
+        await logToDB('error', error, request, context)
+      }
 
       // Set the substitution status to 'active'
-      const updatedSub = await mongoClient.db(mongoDB.DB_NAME).collection(mongoDB.SUBSTITUTIONS_COLLECTION).updateOne({ _id: substition._id }, { status: 'active', updatedTimestamp: new Date() }, { new: true })
+      const updatedSub = await mongoClient.db(mongoDB.DB_NAME).collection(mongoDB.SUBSTITUTIONS_COLLECTION).updateOne({ _id: substition._id }, {$set: { status: 'active', updatedTimestamp: new Date() }}, { new: true })
       responses.push(updatedSub)
       stats.push({ teamId: substition.teamId, status: 'active', description: 'Substitute activated' })
     } catch (error) {
