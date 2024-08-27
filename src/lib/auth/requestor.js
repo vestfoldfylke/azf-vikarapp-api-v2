@@ -5,7 +5,9 @@ const { getAdditionalRequestorInfo } = require('../callGraph')
 
 // Must initate the config before so the logging prefix is set...
 const someConfig = config
-someConfig.length > 0
+if (someConfig.length > 0) {
+  logger('info', ['prepareRequest', 'Config loaded'])
+}
 // const setupMock = require('../mock/setupMock')
 
 const defaultOptions = {
