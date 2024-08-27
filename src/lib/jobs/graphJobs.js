@@ -84,10 +84,10 @@ const deactivateSubstitutions = async (onlyFirst = false, substitutions, request
       await createStats(stat)
     }
   }
- 
+
   // Log the substitutions to the db
   logger('info', [logPrefix, `Deactivated '${responses.length}' substitutions`])
-  await logToDB('info', { message: `Deactivated '${responses.length}' substitutions`,  substitutions: responses }, request, context)
+  await logToDB('info', { message: `Deactivated '${responses.length}' substitutions`, substitutions: responses }, request, context)
 
   // Return the responses
   return responses
@@ -143,7 +143,7 @@ const activateSubstitutions = async (onlyFirst = false, request, context) => {
       }
 
       // Set the substitution status to 'active'
-      const updatedSub = await mongoClient.db(mongoDB.DB_NAME).collection(mongoDB.SUBSTITUTIONS_COLLECTION).updateOne({ _id: substition._id }, {$set: { status: 'active', updatedTimestamp: new Date() }}, { new: true })
+      const updatedSub = await mongoClient.db(mongoDB.DB_NAME).collection(mongoDB.SUBSTITUTIONS_COLLECTION).updateOne({ _id: substition._id }, { $set: { status: 'active', updatedTimestamp: new Date() } }, { new: true })
       responses.push(updatedSub)
       stats.push({ teamId: substition.teamId, status: 'active', description: 'Substitute activated' })
     } catch (error) {

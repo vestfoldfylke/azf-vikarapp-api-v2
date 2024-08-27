@@ -226,7 +226,7 @@ app.http('substitutions', {
         // Loop through the request body
         /* eslint no-unreachable-loop: ["error", { "ignore": ["ForOfStatement"] }] */
         for (const substitution of requestBody) {
-          let newSubstitutionsObj = {
+          const newSubstitutionsObj = {
             _id: '',
             status: 'pending',
             teacherId: '',
@@ -241,7 +241,7 @@ app.http('substitutions', {
             teamSdsId: '',
             substitutionUpdated: 0,
             expirationTimestamp: '',
-            createdTimestamp: new Date(),
+            createdTimestamp: new Date()
           }
 
           // Get the substitute and teacher
@@ -287,16 +287,16 @@ app.http('substitutions', {
           if (substitution.status === 'active') {
             logger('info', [logPrefix, 'The substitution is currently active and should be renewed'])
             renewedSubstitutions.push({
-              extendedSubstitution: {...substitution},
+              extendedSubstitution: { ...substitution },
               _id: substitution._id, // Document ID from mongoDB
               expirationTimestamp
             })
           } else if (substitution.status === 'expired') {
             logger('info', [logPrefix, 'The substitution is currently expired and should be renewed'])
             renewedExpiredSubstitutions.push({
-              expiredSubstitution: {...substitution},
+              expiredSubstitution: { ...substitution },
               _id: substitution._id, // Document ID from mongoDB
-              expirationTimestamp,
+              expirationTimestamp
             })
           } else {
             // If we enable School data sync, we can get the school id from the team mail. Unusable for now.
@@ -324,7 +324,7 @@ app.http('substitutions', {
             newSubstitutions.push(newSubstitutionsObj)
           }
         }
-        
+
         // Make the request to the database
         let documents = [] // The documents to be returned
         if (newSubstitutions.length > 0) {
@@ -341,12 +341,12 @@ app.http('substitutions', {
               } catch (error) {
                 logger('error', [logPrefix, 'An error occured while trying to activate the substitutions or create logentry in the database', error])
                 await logToDB('error', error, request, context, requestor)
-                return { status: 404, jsonBody: JSON.stringify({ error: error?.message || error })}
+                return { status: 404, jsonBody: JSON.stringify({ error: error?.message || error }) }
               }
             } catch (error) {
               logger('error', [logPrefix, 'An error occured while trying to Insert the new substitutions into the DB', error])
               await logToDB('error', error, request, context, requestor)
-              return { status: 404, jsonBody: JSON.stringify({ error: error?.message || error }) } 
+              return { status: 404, jsonBody: JSON.stringify({ error: error?.message || error }) }
             }
           }
         }
@@ -355,7 +355,7 @@ app.http('substitutions', {
           try {
             // Update the renewed substitutions
             logger('info', [logPrefix, 'Update the renewed substitutions expirationTimestamp'])
-            const result = await mongoClient.db(mongoDB.DB_NAME).collection(mongoDB.SUBSTITUTIONS_COLLECTION).updateOne({ _id: new ObjectId(renewal._id) }, { $set: { expirationTimestamp: renewal.expirationTimestamp, updatedTimestamp: new Date()}, $inc: { substitutionUpdated: 1 } })
+            const result = await mongoClient.db(mongoDB.DB_NAME).collection(mongoDB.SUBSTITUTIONS_COLLECTION).updateOne({ _id: new ObjectId(renewal._id) }, { $set: { expirationTimestamp: renewal.expirationTimestamp, updatedTimestamp: new Date() }, $inc: { substitutionUpdated: 1 } })
             documents = [...documents, result]
 
             try {
@@ -364,12 +364,12 @@ app.http('substitutions', {
             } catch (error) {
               logger('error', [logPrefix, 'An error occured while trying to activate the substitutions or create logentry in the database', error])
               await logToDB('error', error, request, context, requestor)
-              return { status: 404, jsonBody: JSON.stringify({ error: error?.message || error })}
+              return { status: 404, jsonBody: JSON.stringify({ error: error?.message || error }) }
             }
           } catch (error) {
             logger('error', [logPrefix, 'An error occured while trying to Update the renewed substitutions in the DB', error])
             await logToDB('error', error, request, context, requestor)
-            return { status: 404, jsonBody: JSON.stringify({ error: error?.message || error })} 
+            return { status: 404, jsonBody: JSON.stringify({ error: error?.message || error }) }
           }
         }
 
@@ -387,21 +387,21 @@ app.http('substitutions', {
             } catch (error) {
               logger('error', [logPrefix, 'An error occured while trying to activate the substitutions or create logentry in the database', error])
               await logToDB('error', error, request, context, requestor)
-              return { status: 404, jsonBody: JSON.stringify({ error: error?.message || error })}
+              return { status: 404, jsonBody: JSON.stringify({ error: error?.message || error }) }
             }
           } catch (error) {
             logger('error', [logPrefix, 'An error occured while trying to Update the renewed substitutions in the DB', error])
             await logToDB('error', error, request, context, requestor)
-            return { status: 404, jsonBody: JSON.stringify({ error: error?.message || error })} 
+            return { status: 404, jsonBody: JSON.stringify({ error: error?.message || error }) }
           }
         }
-  
+
         // Return the documents
         return { status: 201, jsonBody: documents }
       } catch (error) {
         logger('error', [logPrefix, 'An error occured while trying to create the substitutions', error])
         await logToDB('error', error, request, context, requestor)
-        return { status: 404, jsonBody: JSON.stringify({ error: error?.message || error })}
+        return { status: 404, jsonBody: JSON.stringify({ error: error?.message || error }) }
       }
     } else if (request.method === 'PUT') {
       // Remember to change the endpoint in the front end from substitutions/deactivate to substitutions!

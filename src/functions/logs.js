@@ -10,7 +10,7 @@ app.http('logs', {
   authLevel: 'anonymous',
   route: 'logs',
   handler: async (request, context) => {
-    let logPrefix = 'logs'
+    const logPrefix = 'logs'
     let requestor
     try {
       // Make sure all the required properties are provided

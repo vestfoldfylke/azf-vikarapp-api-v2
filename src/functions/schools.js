@@ -12,9 +12,9 @@ app.http('schools', {
   route: 'schools/{id?}', // id is optional, make sure to check if it is provided
   handler: async (request, context) => {
     let logPrefix = 'schools'
-    let requestor
+
     // Make sure all the required properties are provided
-    ({ requestor } = await prepareRequest(request))
+    const { requestor } = await prepareRequest(request)
     const validRoles = ['App.Config', 'App.Admin']
     const requestBody = await request.text()
     // Make sure the requestor has the correct role (App.Config)

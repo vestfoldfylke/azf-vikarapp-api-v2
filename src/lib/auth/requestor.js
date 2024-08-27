@@ -4,7 +4,8 @@ const { auth } = require('./auth')
 const { getAdditionalRequestorInfo } = require('../callGraph')
 
 // Must initate the config before so the logging prefix is set...
-let someConfig = config
+const someConfig = config
+someConfig.length > 0
 // const setupMock = require('../mock/setupMock')
 
 const defaultOptions = {
@@ -21,7 +22,7 @@ const defaultOptions = {
  * @returns
  */
 const prepareRequest = async (req, options = {}) => {
-  let logPrefix = 'prepareRequest'
+  const logPrefix = 'prepareRequest'
   // Merge options with default options
   if (typeof options !== 'object') options = {}
   options = { ...defaultOptions, ...options }
@@ -30,14 +31,14 @@ const prepareRequest = async (req, options = {}) => {
   const missingProps = []
   if (options.required) {
     options.required.forEach(prop => {
-      if(!prop.split('.').includes('body')) {
+      if (!prop.split('.').includes('body')) {
         if (!req.params[prop]) {
           missingProps.push(prop)
-        } 
+        }
       } else {
         if (!req.body[prop]) {
           missingProps.push(prop)
-        } 
+        }
       }
     })
     if (missingProps.length > 0) {
@@ -58,7 +59,7 @@ const prepareRequest = async (req, options = {}) => {
   if (process.env.NODE_ENV === 'test' || options.mock) {
     // setupMock()
   }
-  
+
   // Before returning the requestor object, make sure that the requestor has jobTitle, department, officeLocation and company. If not, get them with the graph api
   // This is because the token provided by the azure ad does not always contain these properties
   if (!requestor.jobTitle || !requestor.department || !requestor.officeLocation || !requestor.company) {

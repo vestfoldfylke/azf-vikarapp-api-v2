@@ -7,7 +7,7 @@ module.exports = {
   NODE_ENV: process.env.NODE_ENV || 'development',
   searchGroupId: process.env.NODE_ENV !== 'test' ? process.env.AZURE_SEARCH_GROUP_ID : '123',
   APIKEYS_MINIMUM_LENGTH: process.env.APIKEYS_MINIMUM_LENGTH || 5,
-  APIKEYS: process.env.APIKEYS || "12345",
+  APIKEYS: process.env.APIKEYS || '12345',
   azureApplication: {
     tenantId: process.env.AZURE_APP_TENANT_ID,
     clientId: process.env.AZURE_APP_ID,
