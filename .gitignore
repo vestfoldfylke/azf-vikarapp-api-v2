@@ -46,3 +46,9 @@ __pycache__/
 __blobstorage__
 __queuestorage__
 __azurite_db*__.json
+
+# Ignore debug files
+/ignore
+
+# local settings
+*.local.settings.json
