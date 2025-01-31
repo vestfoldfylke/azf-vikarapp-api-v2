@@ -1,5 +1,5 @@
-const { verify } = require('azure-ad-verify-token')
 const { azureApplication } = require('../../../config')
+const verifyToken = (...args) => import('azure-ad-verify-token').then(({ verify }) => verify(...args))
 
 /**
  *
@@ -22,7 +22,7 @@ module.exports = async (authHeader) => {
   // Validation
   let validatedToken
   try {
-    validatedToken = await verify(bearerToken.replace('Bearer ', ''), tokenConfig)
+    validatedToken = await verifyToken(bearerToken.replace('Bearer ', ''), tokenConfig)
   } catch (err) {
     throw new Error('The token is invalid')
   }
