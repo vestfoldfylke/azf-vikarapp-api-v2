@@ -5,7 +5,8 @@ const { logToDB } = require('../lib/jobs/logToDB')
 const { logger } = require('@vtfk/logger')
 
 app.timer('deactivateSubstitutions', {
-  schedule: '*/15 22-23,0-2 * * *', // At every 15th minute past every hour from 22 through 23 and every hour from 0 through 2.
+  schedule: '30 */15 * * * *', // every 15th minute at 30 seconds past the minute
+  // schedule: '*/15 22-23,0-2 * * *', // At every 15th minute past every hour from 22 through 23 and every hour from 0 through 2.
   handler: async (myTimer, context) => {
     if (['true', true].includes(config.APP_DEACTIVATE_TIMERS)) return
     try {
