@@ -6,7 +6,7 @@ const { logger } = require('@vtfk/logger')
 
 app.timer('deactivateSubstitutions', {
   schedule: '*/15 22-23,0-2 * * *', // At every 15th minute past every hour from 22 through 23 and every hour from 0 through 2.
-  handler: async (context) => {
+  handler: async (myTimer, context) => {
     if (['true', true].includes(config.APP_DEACTIVATE_TIMERS)) return
     try {
       await deactivateSubstitutions(false, undefined, undefined, context)
