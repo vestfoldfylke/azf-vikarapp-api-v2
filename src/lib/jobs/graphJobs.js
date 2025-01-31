@@ -45,34 +45,42 @@ const deactivateSubstitutions = async (onlyFirst = false, substitutions, request
       // Make sure that the substitute is already owner. Find owners and Members.
       logger('info', [logPrefix, 'Get the owners and members of the team'])
       const owners = await getGroupOwners(substitution.teamId)
+      logger('info', [logPrefix, `Got ${owners.length} owners of team ${substitution.teamId}`])
       const members = await getGroupMembers(substitution.teamId)
+      logger('info', [logPrefix, `Got ${members.length} members of team ${substitution.teamId}`])
 
       logger('info', [logPrefix, 'Check if the substitute is an owner or a member'])
       const currentOwner = owners.find((i) => i.id === substitution.substituteId)
+      logger('info', [logPrefix, `Substition-subject as owner: ${currentOwner}`])
       const currentMember = members.find((i) => i.id === substitution.substituteId)
+      logger('info', [logPrefix, `Substitution-subject as memeber: ${currentMember}`])
 
       // If the substitute is an owner, remove the owner. If the substitute is a member, remove the member.
       logger('info', [logPrefix, 'Remove the substitute from the team if it is an owner or a member'])
       if (currentOwner || currentMember) {
         if (currentOwner) {
           // Remove the owner
-          logger('info', [logPrefix, 'Remove the substitute as owner'])
+          logger('info', [logPrefix, `Remove the substitute ${substitution.substituteId} as owner from team ${substitution.teamId}`])
           await removeGroupOwner(substitution.teamId, substitution.substituteId)
+          logger('info', [logPrefix, `Successfully removed the substitute ${substitution.substituteId} as owner from team ${substitution.teamId}`])
         }
         if (currentMember) {
           // Remove the member
-          logger('info', [logPrefix, 'Remove the substitute as member'])
+          logger('info', [logPrefix, `Remove the substitute ${substitution.substituteId} as member from team ${substitution.teamId}`])
           await removeGroupMember(substitution.teamId, substitution.substituteId)
+          logger('info', [logPrefix, `Successfully removed the substitute ${substitution.substituteId} as member from team ${substitution.teamId}`])
         }
-        // Set the substitution status to 'expired'
-        logger('info', [logPrefix, `Set the substitution: ${substitution._id} status to 'expired'`])
-        const updatedSub = await mongoClient.db(mongoDB.DB_NAME).collection(mongoDB.SUBSTITUTIONS_COLLECTION).updateOne({ _id: substitution._id }, { $set: { status: 'expired' } })
-        logger('info', [logPrefix, `Substitution: ${substitution._id} updated, status: 'expired'`])
-        responses.push(updatedSub)
-        stats.push({ teamId: substitution.teamId, status: 'expired', description: 'Substitute expired' })
+      } else {
+        logger('info', [logPrefix, `The substitute ${substitution.substituteId} is not an owner or a member of the team ${substitution.teamId} - can set substitution status to 'expired'`])
       }
+      // Set the substitution status to 'expired'
+      logger('info', [logPrefix, `Set the substitution: ${substitution._id} status to 'expired'`])
+      const updatedSub = await mongoClient.db(mongoDB.DB_NAME).collection(mongoDB.SUBSTITUTIONS_COLLECTION).updateOne({ _id: substitution._id }, { $set: { status: 'expired' } })
+      logger('info', [logPrefix, `Substitution: ${substitution._id} updated, status: 'expired'`])
+      responses.push(updatedSub)
+      stats.push({ teamId: substitution.teamId, status: 'expired', description: 'Substitute expired' })
     } catch (error) {
-      logger('error', [logPrefix, 'An error occured while trying to deactivate the substitution', error])
+      logger('error', [logPrefix, 'An error occured while trying to deactivate the substitution', error?.response?.data || error.stack || error.toString()])
       // Log the error to the db
       await logToDB('error', error, request, context)
     }

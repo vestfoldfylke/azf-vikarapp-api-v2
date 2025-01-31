@@ -7,6 +7,12 @@ const logToDB = async (type = 'info', data, request, context, requestor) => {
     logger('error', ['logToDB', 'Missing required parameter: data'])
     throw new Error('Missing required parameter: data')
   }
+  if (data instanceof Error) {
+    data = {
+      message: data.message,
+      stack: data.stack
+    }
+  }
   if (Array.isArray(data)) data = data[0]
   try {
     // Get the information.
