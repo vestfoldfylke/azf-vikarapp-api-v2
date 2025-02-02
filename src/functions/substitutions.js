@@ -28,6 +28,11 @@ app.http('substitutions', {
         throw new Error('The body must be an array')
       }
 
+      // Filter out any duplicates in the request body, based on the teacherUpn and teamId. 
+      // This is to prevent duplicates in the database and to make sure that the requestor is not trying to create multiple substitutions for the same teacher and team.
+      logger('info', [logPrefix, 'Filter out any duplicates in the request body'])
+      requestBody = requestBody.filter((item, index, self) => index === self.findIndex((t) => (t.teacherUpn === item.teacherUpn && t.teamId === item.teamId)))
+
       // Make sure all the required properties are provided
       logger('info', [logPrefix, 'Make sure all the required properties are provided'])
       for (const substitution of requestBody) {
@@ -174,10 +179,10 @@ app.http('substitutions', {
         const existingSubstitutions = await mongoClient.db(mongoDB.DB_NAME).collection(mongoDB.SUBSTITUTIONS_COLLECTION).find({ substituteId: substitute.id })
         if (existingSubstitutions) {
           substitute.substitutions = existingSubstitutions
+          logger('info', [logPrefix, `Found ${existingSubstitutions.length} existing substitutions for the substitute ${upn}`])
         }
 
         // Check if the substitute is admin. If not, get the substitutes permittedLocations
-        console.log(requestor.roles)
         if (!requestor.roles.includes('App.Admin')) {
           logger('info', [logPrefix, `Check if the substitute ${upn} has the required permissions to substitute for the teacher`])
           // console.log(substitute.permittedLocations)

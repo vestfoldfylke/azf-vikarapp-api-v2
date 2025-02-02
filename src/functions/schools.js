@@ -72,11 +72,8 @@ app.http('schools', {
       }
       try {
         logger('info', [logPrefix, 'Update the school with the provided id'])
-        console.log('requestBody', ((requestBody)))
         // Find the document with the provided ._id and update the permittedSchools array in the document
-        console.log(request.params.id)
         school = await mongoClient.db(mongoDB.DB_NAME).collection(mongoDB.SCHOOLS_COLLECTION).updateOne({ _id: new ObjectId(request.params.id) }, { $set: { permittedSchools: JSON.parse(requestBody) } }, { returnDocument: 'after' })
-        console.log('school', school)
         logger('info', [logPrefix, `School updated with id ${request.params.id}`])
         await logToDB('info', school, request, context, requestor)
       } catch (error) {
