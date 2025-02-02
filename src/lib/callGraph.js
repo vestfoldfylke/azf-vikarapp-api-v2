@@ -44,7 +44,6 @@ const searchUsersInGroup = async (searchTerm, groupId, requestor, returnSelf) =>
   if (data?.value) data = data.value
 
   // If not should not return self
-  console.log(data)
   if (!returnSelf) data = data.filter((i) => i.userPrincipalName !== requestor.upn)
 
   return data
@@ -174,7 +173,6 @@ const addGroupOwner = async (groupId, userId) => {
 
   // Make the request
   const { data } = await axios.request(request)
-  console.log(data)
   return data
 }
 
