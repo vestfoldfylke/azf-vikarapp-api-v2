@@ -153,7 +153,7 @@ app.http('substitutions', {
         substitutions = await mongoClient.db(mongoDB.DB_NAME).collection(mongoDB.SUBSTITUTIONS_COLLECTION).find(filter).sort({ expirationTimestamp: -1 }).toArray()
         logger('info', [logPrefix, `Found ${substitutions.length} substitutions`])
       } catch (error) {
-        logger('error', [logPrefix, 'An error occured while trying to get the substitutions', error])
+        logger('error', [logPrefix, 'An error occured while trying to get the substitutions', error?.message || JSON.stringify(error)])
         await logToDB('error', error, request, context, requestor)
       }
 
@@ -344,12 +344,12 @@ app.http('substitutions', {
                 await activateSubstitutions(false, request, context)
                 await logToDB('info', newSubstitution, request, context, requestor)
               } catch (error) {
-                logger('error', [logPrefix, 'An error occured while trying to activate the substitutions or create logentry in the database', error])
+                logger('error', [logPrefix, 'An error occured while trying to activate the substitutions or create logentry in the database', error?.message || JSON.stringify(error)])
                 await logToDB('error', error, request, context, requestor)
                 return { status: 404, jsonBody: JSON.stringify({ error: error?.message || error }) }
               }
             } catch (error) {
-              logger('error', [logPrefix, 'An error occured while trying to Insert the new substitutions into the DB', error])
+              logger('error', [logPrefix, 'An error occured while trying to Insert the new substitutions into the DB', error?.message || JSON.stringify(error)])
               await logToDB('error', error, request, context, requestor)
               return { status: 404, jsonBody: JSON.stringify({ error: error?.message || error }) }
             }
@@ -367,12 +367,12 @@ app.http('substitutions', {
               // Logg action to the database
               await logToDB('info', renewal, request, context, requestor)
             } catch (error) {
-              logger('error', [logPrefix, 'An error occured while trying to activate the substitutions or create logentry in the database', error])
+              logger('error', [logPrefix, 'An error occured while trying to activate the substitutions or create logentry in the database', error?.message || JSON.stringify(error)])
               await logToDB('error', error, request, context, requestor)
               return { status: 404, jsonBody: JSON.stringify({ error: error?.message || error }) }
             }
           } catch (error) {
-            logger('error', [logPrefix, 'An error occured while trying to Update the renewed substitutions in the DB', error])
+            logger('error', [logPrefix, 'An error occured while trying to Update the renewed substitutions in the DB', error?.message || JSON.stringify(error)])
             await logToDB('error', error, request, context, requestor)
             return { status: 404, jsonBody: JSON.stringify({ error: error?.message || error }) }
           }
@@ -390,12 +390,12 @@ app.http('substitutions', {
               await activateSubstitutions(false, request, context)
               await logToDB('info', renewal, request, context, requestor)
             } catch (error) {
-              logger('error', [logPrefix, 'An error occured while trying to activate the substitutions or create logentry in the database', error])
+              logger('error', [logPrefix, 'An error occured while trying to activate the substitutions or create logentry in the database', error?.message || JSON.stringify(error)])
               await logToDB('error', error, request, context, requestor)
               return { status: 404, jsonBody: JSON.stringify({ error: error?.message || error }) }
             }
           } catch (error) {
-            logger('error', [logPrefix, 'An error occured while trying to Update the renewed substitutions in the DB', error])
+            logger('error', [logPrefix, 'An error occured while trying to Update the renewed substitutions in the DB', error?.message || JSON.stringify(error)])
             await logToDB('error', error, request, context, requestor)
             return { status: 404, jsonBody: JSON.stringify({ error: error?.message || error }) }
           }
@@ -404,7 +404,7 @@ app.http('substitutions', {
         // Return the documents
         return { status: 201, jsonBody: documents }
       } catch (error) {
-        logger('error', [logPrefix, 'An error occured while trying to create the substitutions', error])
+        logger('error', [logPrefix, 'An error occured while trying to create the substitutions', error?.message || JSON.stringify(error)])
         await logToDB('error', error, request, context, requestor)
         return { status: 404, jsonBody: JSON.stringify({ error: error?.message || error }) }
       }
@@ -442,7 +442,7 @@ app.http('substitutions', {
         logger('info', [logPrefix, 'Return the deactivated substitutions'])
         return { status: 201, jsonBody: response }
       } catch (error) {
-        logger('error', [logPrefix, 'An error occured while trying to deactivate the substitutions', error?.message || error])
+        logger('error', [logPrefix, 'An error occured while trying to deactivate the substitutions', error?.message || JSON.stringify(error)])
         await logToDB('error', error, request, context, requestor)
         return { status: 500, jsonBody: { error: error?.message || error } }
       }

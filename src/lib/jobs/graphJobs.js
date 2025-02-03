@@ -17,7 +17,7 @@ const deactivateSubstitutions = async (onlyFirst = false, substitutions, request
     try {
       substitutions = await mongoClient.db(mongoDB.DB_NAME).collection(mongoDB.SUBSTITUTIONS_COLLECTION).find(query).toArray()
     } catch (error) {
-      logger('error', [logPrefix, 'An error occured while trying to get the active substitutions', error])
+      logger('error', [logPrefix, 'An error occured while trying to get the active substitutions', error?.message || JSON.stringify(error)])
       throw new Error('An error occured while trying to get the active substitutions')
     }
   }
@@ -80,7 +80,7 @@ const deactivateSubstitutions = async (onlyFirst = false, substitutions, request
       responses.push(updatedSub)
       stats.push({ teamId: substitution.teamId, status: 'expired', description: 'Substitute expired' })
     } catch (error) {
-      logger('error', [logPrefix, 'An error occured while trying to deactivate the substitution', error?.response?.data || error.stack || error.toString()])
+      logger('error', [logPrefix, 'An error occured while trying to deactivate the substitution', error?.message || JSON.stringify(error)])
       // Log the error to the db
       await logToDB('error', error, request, context)
     }
@@ -146,7 +146,7 @@ const activateSubstitutions = async (onlyFirst = false, request, context) => {
       try {
         await addGroupOwner(substition.teamId, substition.substituteId)
       } catch (error) {
-        logger('error', [logPrefix, 'An error occured while trying to add the substitute as owner to the team', error])
+        logger('error', [logPrefix, 'An error occured while trying to add the substitute as owner to the team', error?.message || JSON.stringify(error)])
         await logToDB('error', error, request, context)
       }
 
@@ -155,7 +155,7 @@ const activateSubstitutions = async (onlyFirst = false, request, context) => {
       responses.push(updatedSub)
       stats.push({ teamId: substition.teamId, status: 'active', description: 'Substitute activated' })
     } catch (error) {
-      logger('error', [logPrefix, 'An error occured while trying to activate the substitution', error])
+      logger('error', [logPrefix, 'An error occured while trying to activate the substitution', error?.message || JSON.stringify(error)])
       await logToDB('error', error, request, context)
     }
 

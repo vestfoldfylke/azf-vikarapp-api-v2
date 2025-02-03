@@ -51,7 +51,7 @@ const logToDB = async (type = 'info', data, request, context, requestor) => {
     await mongoClient.db(mongoDB.DB_NAME).collection(mongoDB.LOG_COLLECTION).insertOne(logEntry)
   } catch (error) {
     // Logger her
-    logger('error', ['logToDB', 'An error occured while trying to log to the database', error?.message || error])
+    logger('error', ['logToDB', 'An error occured while trying to log to the database', error?.message || JSON.stringify(error)])
     throw new Error('An error occured while trying to log to the database')
   }
 }

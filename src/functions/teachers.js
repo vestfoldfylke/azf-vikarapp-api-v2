@@ -51,7 +51,7 @@ app.http('teachers', {
       // Return the users
       return { status: 200, jsonBody: users }
     } catch (error) {
-      logger('error', [logPrefix, 'An error occured while trying to get the teachers', error?.message || error])
+      logger('error', [logPrefix, 'An error occured while trying to get the teachers', error?.message || JSON.stringify(error)])
       await logToDB('error', error, request, context, requestor)
       return { status: 500, jsonBody: { error: error?.message || error } }
     }
