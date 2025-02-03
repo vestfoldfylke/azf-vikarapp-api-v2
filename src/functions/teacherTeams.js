@@ -52,7 +52,7 @@ app.http('teacherTeams', {
       logger('info', [logPrefix, `Found ${ownedObjects.length} teams for user with upn ${request.params.upn}`])
       return { status: 200, jsonBody: ownedObjects }
     } catch (error) {
-      logger('error', [logPrefix, 'An error occured while trying to get the teacher teams', error?.message || error])
+      logger('error', [logPrefix, 'An error occured while trying to get the teacher teams', error?.message || JSON.stringify(error)])
       await logToDB('error', error, request, context, requestor)
       return { status: 500, jsonBody: { error: error?.message || error } }
     }

@@ -37,7 +37,7 @@ app.http('schools', {
         schools = await mongoClient.db(mongoDB.DB_NAME).collection(mongoDB.SCHOOLS_COLLECTION).find().sort({ name: 1 }).toArray()
         logger('info', [logPrefix, `Found ${schools.length} schools`])
       } catch (error) {
-        logger('error', [logPrefix, 'An error occured while trying to get the schools', error])
+        logger('error', [logPrefix, 'An error occured while trying to get the schools', error?.message || JSON.stringify(error)])
         await logToDB('error', error, request, context, requestor)
       }
 
@@ -54,7 +54,7 @@ app.http('schools', {
         logger('info', [logPrefix, `School posted to the database with id ${school.insertedId}`])
         await logToDB('info', school, request, context, requestor)
       } catch (error) {
-        logger('error', [logPrefix, 'An error occured while trying to post the school to the database', error])
+        logger('error', [logPrefix, 'An error occured while trying to post the school to the database', error?.message || JSON.stringify(error)])
         await logToDB('error', error, request, context, requestor)
       }
 
@@ -77,7 +77,7 @@ app.http('schools', {
         logger('info', [logPrefix, `School updated with id ${request.params.id}`])
         await logToDB('info', school, request, context, requestor)
       } catch (error) {
-        logger('error', [logPrefix, 'An error occured while trying to update the school', error])
+        logger('error', [logPrefix, 'An error occured while trying to update the school', error?.message || JSON.stringify(error)])
         await logToDB('error', error, request, context, requestor)
       }
 
