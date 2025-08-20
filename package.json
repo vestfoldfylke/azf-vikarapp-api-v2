@@ -15,9 +15,11 @@
     "@vtfk/logger": "^6.3.4",
     "axios": "^1.11.0",
     "azure-ad-verify-token": "^3.0.3",
-    "jest": "^29.7.0",
     "mongodb": "^6.18.0",
-    "node-cache": "^5.1.2",
-    "standard": "^17.1.0"
+    "node-cache": "^5.1.2"
+  },
+  "devDependencies": {
+    "jest": "^30.0.5",
+    "standard": "^17.1.2"
   }
 }
