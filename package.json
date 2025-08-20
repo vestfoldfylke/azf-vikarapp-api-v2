@@ -18,8 +18,5 @@
     "mongodb": "^6.7.0",
     "node-cache": "^5.1.2",
     "standard": "^17.1.0"
-  },
-  "devDependencies": {
-    "azure-functions-core-tools": "^4.x"
   }
 }
