@@ -5,7 +5,8 @@
   "main": "src/functions/*.js",
   "scripts": {
     "start": "func start",
-    "test": "standard --fix",
+    "test": "standard",
+    "test:fix": "standard --fix",
     "jest": "jest"
   },
   "dependencies": {
