@@ -1,6 +1,6 @@
 {
   "name": "azf-vikarapp-api-v2",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Handler for VikarApp API v2",
   "main": "src/functions/*.js",
   "scripts": {
