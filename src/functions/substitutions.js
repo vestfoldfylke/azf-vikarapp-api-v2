@@ -28,7 +28,7 @@ app.http('substitutions', {
         throw new Error('The body must be an array')
       }
 
-      // Filter out any duplicates in the request body, based on the teacherUpn and teamId. 
+      // Filter out any duplicates in the request body, based on the teacherUpn and teamId.
       // This is to prevent duplicates in the database and to make sure that the requestor is not trying to create multiple substitutions for the same teacher and team.
       logger('info', [logPrefix, 'Filter out any duplicates in the request body'])
       requestBody = requestBody.filter((item, index, self) => index === self.findIndex((t) => (t.teacherUpn === item.teacherUpn && t.teamId === item.teamId)))
