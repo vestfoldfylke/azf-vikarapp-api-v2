@@ -1,6 +1,6 @@
-const { logger } = require("@vtfk/logger");
-const { getMongoClient } = require("./mongoClient");
-const { mongoDB } = require("../../config");
+const { logger } = require('@vtfk/logger')
+const { getMongoClient } = require('./mongoClient')
+const { mongoDB } = require('../../config')
 const removeSubstitution = async (id) => {
   if (!id) {
     logger('error', ['removeSubstitution', 'Cannot remove a substitution if \'id\' is not specified'])
