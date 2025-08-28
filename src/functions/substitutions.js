@@ -287,8 +287,8 @@ app.http('substitutions', {
             throw new Error(`The requested team ${substitution.teamId} is not a school team`)
           }
 
-          // Check if the substition is currently active and should be renewed, else create a new substitution
-          logger('info', [logPrefix, 'Check if the substition is currently active and should only be renewed else create a new substitution'])
+          // Check if the substitution is currently active and should be renewed, else create a new substitution
+          logger('info', [logPrefix, 'Check if the substitution is currently active and should only be renewed else create a new substitution'])
           if (substitution.status === 'active') {
             logger('info', [logPrefix, 'The substitution is currently active and should be renewed'])
             renewedSubstitutions.push({
