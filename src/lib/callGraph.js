@@ -1,6 +1,8 @@
 const axios = require('axios').default
+const { logger } = require('@vtfk/logger')
 const getAccessToken = require('./auth/get-endtraid-token')
 const { azureApplication } = require('../../config')
+const { removeSubstitution } = require('./mongoCalls')
 
 const getUser = async (upn) => {
   // Input validation
@@ -93,9 +95,11 @@ const getGroups = async (id) => {
   return data
 }
 
-const getGroupOwners = async (id) => {
+const getGroupOwners = async (groupId, substitutionId = undefined) => {
   // Input validation
-  if (!id) throw new Error('Cannot search for a user if \'id\' is not specified')
+  if (!groupId) {
+    throw new Error('Cannot search for a user if \'id\' is not specified')
+  }
 
   // Prepare the request
   const request = {
@@ -105,14 +109,27 @@ const getGroupOwners = async (id) => {
       Authorization: `Bearer ${await getAccessToken(azureApplication.scope)}`,
       ConsistencyLevel: 'eventual'
     },
-    url: `https://graph.microsoft.com/v1.0/groups/${id}/owners`
+    url: `https://graph.microsoft.com/v1.0/groups/${groupId}/owners`
   }
 
   // Make the request and normalize the data
-  let { data } = await axios.request(request)
-  if (data?.value) data = data.value
+  try {
+    let { data } = await axios.request(request)
+    if (data?.value) data = data.value
 
-  return data
+    return data
+  } catch (error) {
+    logger('error', ['getGroupOwners', 'An error occured while trying to get the owners of a group', error?.message || error])
+    if (error?.response?.status === 404) {
+      logger('warn', ['getGroupOwners', `The group with id '${groupId}' could not be found`])
+      if (substitutionId) {
+        logger('warn', ['getGroupOwners', `Attempting to remove substitution with id ${substitutionId}.`])
+        await removeSubstitution(substitutionId)
+      }
+    }
+
+    throw error
+  }
 }
 
 const getGroupMembers = async (id) => {

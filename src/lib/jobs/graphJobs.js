@@ -37,26 +37,26 @@ const deactivateSubstitutions = async (onlyFirst = false, substitutions, request
         continue
       }
       if (!substitution.substituteId) {
-        logger('error', [logPrefix, `Substitution '${substitution.substituteId}' missing substituteId`])
+        logger('error', [logPrefix, `Substitution '${substitution._id}' missing substituteId`])
         error.errors.push(new Error(`Substitution '${substitution.substituteId}' missing substituteId`))
         continue
       }
 
       // Make sure that the substitute is already owner. Find owners and Members.
-      logger('info', [logPrefix, 'Get the owners and members of the team'])
-      const owners = await getGroupOwners(substitution.teamId)
+      logger('info', [logPrefix, `Get the owners and members of the team ${substitution.teamId}`])
+      const owners = await getGroupOwners(substitution.teamId, substitution._id)
       logger('info', [logPrefix, `Got ${owners.length} owners of team ${substitution.teamId}`])
       const members = await getGroupMembers(substitution.teamId)
       logger('info', [logPrefix, `Got ${members.length} members of team ${substitution.teamId}`])
 
-      logger('info', [logPrefix, 'Check if the substitute is an owner or a member'])
+      logger('info', [logPrefix, `Check if the substitute ${substitution.substituteId} is an owner or a member of team ${substitution.teamId}`])
       const currentOwner = owners.find((i) => i.id === substitution.substituteId)
-      logger('info', [logPrefix, `Substition-subject as owner: ${currentOwner}`])
+      logger('info', [logPrefix, `Substitution-subject as owner: ${currentOwner}`])
       const currentMember = members.find((i) => i.id === substitution.substituteId)
       logger('info', [logPrefix, `Substitution-subject as memeber: ${currentMember}`])
 
       // If the substitute is an owner, remove the owner. If the substitute is a member, remove the member.
-      logger('info', [logPrefix, 'Remove the substitute from the team if it is an owner or a member'])
+      logger('info', [logPrefix, `Remove the substitute ${substitution.substituteId} from the team ${substitution.teamId} if it is an owner or a member`])
       if (currentOwner || currentMember) {
         if (currentOwner) {
           // Remove the owner
@@ -80,7 +80,7 @@ const deactivateSubstitutions = async (onlyFirst = false, substitutions, request
       responses.push(updatedSub)
       stats.push({ teamId: substitution.teamId, status: 'expired', description: 'Substitute expired' })
     } catch (error) {
-      logger('error', [logPrefix, 'An error occured while trying to deactivate the substitution', error?.message || JSON.stringify(error)])
+      logger('error', [logPrefix, `An error occured while trying to deactivate the substitutionId ${substitution.substituteId} for team ${substitution.teamId}`, error?.message || JSON.stringify(error)])
       // Log the error to the db
       await logToDB('error', error, request, context)
     }
@@ -130,30 +130,30 @@ const activateSubstitutions = async (onlyFirst = false, request, context) => {
 
   // Loop through the pending substitutions and activate them.
   /* eslint no-unreachable-loop: ["error", { "ignore": ["ForOfStatement"] }] */
-  for (const substition of pendingSubstitutions) {
+  for (const substitution of pendingSubstitutions) {
     try {
-      if (!substition.teamId) {
-        logger('error', [logPrefix, `Substitution '${substition._id}' missing teamId`])
-        throw new Error(`Substitution '${substition._id}' missing teamId`)
+      if (!substitution.teamId) {
+        logger('error', [logPrefix, `Substitution '${substitution._id}' missing teamId`])
+        throw new Error(`Substitution '${substitution._id}' missing teamId`)
       }
-      if (!substition.substituteId) {
-        logger('error', [logPrefix, `Substitution '${substition._id}' missing substituteId`])
-        throw new Error(`Substitution '${substition._id}' missing substituteId`)
+      if (!substitution.substituteId) {
+        logger('error', [logPrefix, `Substitution '${substitution._id}' missing substituteId`])
+        throw new Error(`Substitution '${substitution._id}' missing substituteId`)
       }
 
       // Add the substitute as owner to the team
       logger('info', [logPrefix, 'Add the substitute as owner to the team'])
       try {
-        await addGroupOwner(substition.teamId, substition.substituteId)
+        await addGroupOwner(substitution.teamId, substitution.substituteId)
       } catch (error) {
         logger('error', [logPrefix, 'An error occured while trying to add the substitute as owner to the team', error?.message || JSON.stringify(error)])
         await logToDB('error', error, request, context)
       }
 
       // Set the substitution status to 'active'
-      const updatedSub = await mongoClient.db(mongoDB.DB_NAME).collection(mongoDB.SUBSTITUTIONS_COLLECTION).updateOne({ _id: substition._id }, { $set: { status: 'active', updatedTimestamp: new Date() } }, { new: true })
+      const updatedSub = await mongoClient.db(mongoDB.DB_NAME).collection(mongoDB.SUBSTITUTIONS_COLLECTION).updateOne({ _id: substitution._id }, { $set: { status: 'active', updatedTimestamp: new Date() } }, { new: true })
       responses.push(updatedSub)
-      stats.push({ teamId: substition.teamId, status: 'active', description: 'Substitute activated' })
+      stats.push({ teamId: substitution.teamId, status: 'active', description: 'Substitute activated' })
     } catch (error) {
       logger('error', [logPrefix, 'An error occured while trying to activate the substitution', error?.message || JSON.stringify(error)])
       await logToDB('error', error, request, context)
@@ -170,8 +170,8 @@ const activateSubstitutions = async (onlyFirst = false, request, context) => {
   }
 }
 
-const getEmplyeeInfo = async (requestor) => {
-  const logPrefix = 'getEmplyeeInfo'
+const getEmployeeInfo = async (requestor) => {
+  const logPrefix = 'getEmployeeInfo'
   const info = await getAdditionalRequestorInfo(requestor)
 
   // Validate that the returned object has the required properties
@@ -187,5 +187,5 @@ const getEmplyeeInfo = async (requestor) => {
 module.exports = {
   deactivateSubstitutions,
   activateSubstitutions,
-  getEmplyeeInfo
+  getEmployeeInfo
 }
