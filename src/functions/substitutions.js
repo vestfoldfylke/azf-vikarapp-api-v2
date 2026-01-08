@@ -287,20 +287,28 @@ app.http('substitutions', {
             throw new Error(`The requested team ${substitution.teamId} is not a school team`)
           }
 
+          const activeSubstitution = substitution.status === 'active' && substitution._id
+            ? substitute.substitutions?.find(sub => sub._id.toString() === substitution._id)
+            : substitute.substitutions?.find(sub => sub.teamId === substitution.teamId && sub.teacherUpn === substitution.teacherUpn && sub.substituteUpn === substitution.substituteUpn && sub.status === 'active')
+
+          const expiredSubstitution = substitution.status === 'expired' && substitution._id
+            ? substitute.substitutions?.find(sub => sub._id.toString() === substitution._id)
+            : substitute.substitutions?.find(sub => sub.teamId === substitution.teamId && sub.teacherUpn === substitution.teacherUpn && sub.substituteUpn === substitution.substituteUpn && sub.status === 'expired')
+
           // Check if the substitution is currently active and should be renewed, else create a new substitution
           logger('info', [logPrefix, 'Check if the substitution is currently active and should only be renewed else create a new substitution'])
-          if (substitution.status === 'active') {
-            logger('info', [logPrefix, 'The substitution is currently active and should be renewed'])
+          if (activeSubstitution) {
+            logger('info', [logPrefix, 'The selected substitution with id', activeSubstitution._id, 'is currently active and will be renewed'])
             renewedSubstitutions.push({
-              extendedSubstitution: { ...substitution },
-              _id: substitution._id, // Document ID from mongoDB
+              extendedSubstitution: {...substitution},
+              _id: activeSubstitution._id, // Document ID from mongoDB
               expirationTimestamp
             })
-          } else if (substitution.status === 'expired') {
-            logger('info', [logPrefix, 'The substitution is currently expired and should be renewed'])
+          } else if (expiredSubstitution) {
+            logger('info', [logPrefix, 'The selected substitution with id', expiredSubstitution._id, 'is currently expired and will be renewed'])
             renewedExpiredSubstitutions.push({
               expiredSubstitution: { ...substitution },
-              _id: substitution._id, // Document ID from mongoDB
+              _id: expiredSubstitution._id, // Document ID from mongoDB
               expirationTimestamp
             })
           } else {
