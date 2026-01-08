@@ -331,7 +331,7 @@ app.http('substitutions', {
           for (const newSubstitution of newSubstitutions) {
             try {
               // Insert the new substitutions
-              logger('info', [logPrefix, 'Insert the new substitutions'])
+              logger('info', [logPrefix, 'Insert the new substitution'])
               const result = await mongoClient.db(mongoDB.DB_NAME).collection(mongoDB.SUBSTITUTIONS_COLLECTION).insertOne(newSubstitution)
               documents.push(result)
               try {
@@ -354,7 +354,7 @@ app.http('substitutions', {
         for (const renewal of renewedSubstitutions) {
           try {
             // Update the renewed substitutions
-            logger('info', [logPrefix, 'Update the renewed substitutions expirationTimestamp'])
+            logger('info', [logPrefix, 'Update the expirationTimestamp on the renewed substitution with id:', renewal._id])
             const result = await mongoClient.db(mongoDB.DB_NAME).collection(mongoDB.SUBSTITUTIONS_COLLECTION).updateOne({ _id: new ObjectId(renewal._id) }, { $set: { expirationTimestamp: renewal.expirationTimestamp, updatedTimestamp: new Date() }, $inc: { substitutionUpdated: 1 } })
             documents = [...documents, result]
 
@@ -377,7 +377,7 @@ app.http('substitutions', {
         for (const renewal of renewedExpiredSubstitutions) {
           try {
             // Update the renewed substitutions
-            logger('info', [logPrefix, 'Update the expired substitutions to pending'])
+            logger('info', [logPrefix, 'Update the expired substitution with id:', renewal._id, 'to pending'])
             const result = await mongoClient.db(mongoDB.DB_NAME).collection(mongoDB.SUBSTITUTIONS_COLLECTION).updateOne({ _id: new ObjectId(renewal._id) }, { $set: { expirationTimestamp: renewal.expirationTimestamp, updatedTimestamp: new Date(), status: 'pending' }, $inc: { substitutionUpdated: 1 } })
             documents = [...documents, result]
             try {
@@ -399,7 +399,7 @@ app.http('substitutions', {
         // Return the documents
         return { status: 201, jsonBody: documents }
       } catch (error) {
-        logger('error', [logPrefix, 'An error occured while trying to create the substitutions', error?.message || JSON.stringify(error)])
+        logger('error', [logPrefix, 'An error occured while trying to create/renew the substitutions', error?.message || JSON.stringify(error)])
         await logToDB('error', error, request, context, requestor)
         return { status: 404, jsonBody: JSON.stringify({ error: error?.message || error }) }
       }
