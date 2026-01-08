@@ -178,8 +178,8 @@ app.http('substitutions', {
         // Attempt to find the exisitng substitutions in the database
         const existingSubstitutions = await mongoClient.db(mongoDB.DB_NAME).collection(mongoDB.SUBSTITUTIONS_COLLECTION).find({ substituteId: substitute.id })
         if (existingSubstitutions) {
-          substitute.substitutions = existingSubstitutions
-          logger('info', [logPrefix, `Found ${existingSubstitutions.length} existing substitutions for the substitute ${upn}`])
+          substitute.substitutions = await existingSubstitutions.toArray()
+          logger('info', [logPrefix, `Found ${substitute.substitutions.length} existing substitutions for the substitute ${upn}`])
         }
 
         // Check if the substitute is admin. If not, get the substitutes permittedLocations
