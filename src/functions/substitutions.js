@@ -231,24 +231,6 @@ app.http('substitutions', {
         // Loop through the request body
         /* eslint no-unreachable-loop: ["error", { "ignore": ["ForOfStatement"] }] */
         for (const substitution of requestBody) {
-          const newSubstitutionsObj = {
-            _id: '',
-            status: 'pending',
-            teacherId: '',
-            teacherName: '',
-            teacherUpn: '',
-            substituteId: '',
-            substituteName: '',
-            substituteUpn: '',
-            teamId: '',
-            teamName: '',
-            teamEmail: '',
-            teamSdsId: '',
-            substitutionUpdated: 0,
-            expirationTimestamp: '',
-            createdTimestamp: new Date()
-          }
-
           // Get the substitute and teacher
           const substitute = substitutes.find(i => i.userPrincipalName === substitution.substituteUpn)
           const teacher = teachers.find(i => i.userPrincipalName === substitution.teacherUpn)
@@ -321,18 +303,23 @@ app.http('substitutions', {
             // Create the new substitution
             logger('info', [logPrefix, 'Create the new substitution'])
             // Create the new substitution object
-            newSubstitutionsObj._id = new ObjectId()
-            newSubstitutionsObj.teacherId = teacher.id
-            newSubstitutionsObj.teacherName = teacher.displayName
-            newSubstitutionsObj.teacherUpn = teacher.userPrincipalName
-            newSubstitutionsObj.substituteId = substitute.id
-            newSubstitutionsObj.substituteName = substitute.displayName
-            newSubstitutionsObj.substituteUpn = substitute.userPrincipalName
-            newSubstitutionsObj.teamId = team.id
-            newSubstitutionsObj.teamName = team.displayName
-            newSubstitutionsObj.teamEmail = team.mail
-            newSubstitutionsObj.teamSdsId = teamSdsId
-            newSubstitutionsObj.expirationTimestamp = expirationTimestamp
+            const newSubstitutionsObj = {
+              _id: new ObjectId(),
+              status: 'pending',
+              teacherId: teacher.id,
+              teacherName: teacher.displayName,
+              teacherUpn: teacher.userPrincipalName,
+              substituteId: substitute.id,
+              substituteName: substitute.displayName,
+              substituteUpn: substitute.userPrincipalName,
+              teamId: team.id,
+              teamName: team.displayName,
+              teamEmail: team.mail,
+              teamSdsId,
+              substitutionUpdated: 0,
+              expirationTimestamp,
+              createdTimestamp: new Date()
+            }
 
             newSubstitutions.push(newSubstitutionsObj)
           }
