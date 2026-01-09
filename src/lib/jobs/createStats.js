@@ -1,9 +1,9 @@
 const { fylke, statistics } = require('../../../config')
-const { logger } = require('@vtfk/logger')
+const { logger } = require('@vestfoldfylke/loglady')
 
 module.exports = async (stat) => {
   const logPrefix = 'createStats'
-  logger('info', [logPrefix, `Creating statistics for each ${stat.status} substitution`])
+  logger.info(`${logPrefix} - Creating statistics for {Status} substitution`, stat.status)
   const statObj = {
     system: 'VikarApp',
     engine: 'azf-vikarapp-api',
@@ -25,10 +25,10 @@ module.exports = async (stat) => {
 
   if (!response.ok) {
     const errorData = await response.json()
-    logger('error', [logPrefix, `Failed to create statistics for ${stat.status} substitution. Status: ${response.status} - ${response.statusText}:`, statObj, '-> ErrorData:', errorData])
+    logger.errorException(errorData, `${logPrefix} - Failed to create statistics for {Status} substitution. ApiStatus: {ApiStatus} - {StatusText} : {@StatObject}`, stat.status, response.status, response.statusText, statObj)
     return false
   }
 
-  logger('info', [logPrefix, `Successfully created statistics for ${stat.status} substitution. Status: ${response.status} :`, statObj])
+  logger.info(`${logPrefix} - Successfully created statistics for {Status} substitution. ApiStatus: {ApiStatus} : {@StatObject}`, stat.status, response.status, statObj)
   return response.status === 200
 }

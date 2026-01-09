@@ -1,6 +1,6 @@
 const { app } = require('@azure/functions')
 const { mongoDB } = require('../../config')
-const { logger } = require('@vtfk/logger')
+const { logger } = require('@vestfoldfylke/loglady')
 const { getMongoClient } = require('../lib/mongoClient')
 const { logToDB } = require('../lib/jobs/logToDB')
 const { prepareRequest } = require('../lib/auth/requestor')
@@ -19,7 +19,7 @@ app.http('schools', {
     const requestBody = await request.text()
     // Make sure the requestor has the correct role (App.Config)
     if (!requestor.roles?.some((roles) => validRoles.includes(roles))) {
-      logger('warn', [logPrefix, 'Unauthorized. The requestor does not have the required role to perform this action.', `Requestor: ${requestor.name} (${requestor.id})`, `Roles: ${requestor.roles?.join(', ')}`])
+      logger.warn(`${logPrefix} - Unauthorized. The requestor does not have the required role to perform this action. Requestor: {RequesterName} ({RequesterId}). Roles: {@Roles}`, requestor.name, requestor.id, requestor.roles?.join(', '))
       throw new Error('Unauthorized. You do not have the required role to perform this action.')
     }
 
@@ -33,11 +33,11 @@ app.http('schools', {
       logPrefix = 'schools - get'
 
       try {
-        logger('info', [logPrefix, 'Get the schools'])
+        logger.info(`${logPrefix} - Get the schools`)
         schools = await mongoClient.db(mongoDB.DB_NAME).collection(mongoDB.SCHOOLS_COLLECTION).find().sort({ name: 1 }).toArray()
-        logger('info', [logPrefix, `Found ${schools.length} schools`])
+        logger.info(`${logPrefix} - Found {SchoolCount} schools`, schools.length)
       } catch (error) {
-        logger('error', [logPrefix, 'An error occured while trying to get the schools', error?.message || JSON.stringify(error)])
+        logger.errorException(error, `${logPrefix} - An error occured while trying to get the schools`)
         await logToDB('error', error, request, context, requestor)
       }
 
@@ -49,12 +49,12 @@ app.http('schools', {
 
       // Post the school to the database from request.body
       try {
-        logger('info', [logPrefix, 'Post the school to the database'])
+        logger.info(`${logPrefix} - Post the school to the database`)
         school = await mongoClient.db(mongoDB.DB_NAME).collection(mongoDB.SCHOOLS_COLLECTION).insertOne(JSON.parse(requestBody))
-        logger('info', [logPrefix, `School posted to the database with id ${school.insertedId}`])
+        logger.info(`${logPrefix} - School posted to the database with id {InsertedId}`, school.insertedId)
         await logToDB('info', school, request, context, requestor)
       } catch (error) {
-        logger('error', [logPrefix, 'An error occured while trying to post the school to the database', error?.message || JSON.stringify(error)])
+        logger.errorException(error, `${logPrefix} - An error occured while trying to post the school to the database`)
         await logToDB('error', error, request, context, requestor)
       }
 
@@ -67,17 +67,17 @@ app.http('schools', {
 
       // Make sure the id is provided
       if (!request.params.id) {
-        logger('warn', [logPrefix, 'No id provided'])
+        logger.warn(`${logPrefix} - No id provided`)
         throw new Error('No id provided')
       }
       try {
-        logger('info', [logPrefix, 'Update the school with the provided id'])
+        logger.info(`${logPrefix} - Update the school with the provided id {Id}`, request.params.id)
         // Find the document with the provided ._id and update the permittedSchools array in the document
         school = await mongoClient.db(mongoDB.DB_NAME).collection(mongoDB.SCHOOLS_COLLECTION).updateOne({ _id: new ObjectId(request.params.id) }, { $set: { permittedSchools: JSON.parse(requestBody) } }, { returnDocument: 'after' })
-        logger('info', [logPrefix, `School updated with id ${request.params.id}`])
+        logger.info(`${logPrefix} - School updated with id {Id}`, request.params.id)
         await logToDB('info', school, request, context, requestor)
       } catch (error) {
-        logger('error', [logPrefix, 'An error occured while trying to update the school', error?.message || JSON.stringify(error)])
+        logger.errorException(error, `${logPrefix} - An error occured while trying to update the school`)
         await logToDB('error', error, request, context, requestor)
       }
 

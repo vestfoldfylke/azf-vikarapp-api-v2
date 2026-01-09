@@ -1,4 +1,4 @@
-const { logger } = require('@vtfk/logger')
+const { logger } = require('@vestfoldfylke/loglady')
 const getAccessToken = require('./auth/get-endtraid-token')
 const { azureApplication } = require('../../config')
 const { removeSubstitution } = require('./mongoCalls')
@@ -18,7 +18,7 @@ const getUser = async (upn) => {
 
   if (!response.ok) {
     const errorData = await response.json()
-    logger('error', ['getUser', `Failed to get user with upn '${upn}'. Status: ${response.status} - ${response.statusText}:`, errorData])
+    logger.errorException(errorData, "getUser - Failed to get user with upn '{Upn}'. Status: {Status} - {StatusText}", upn, response.status, response.statusText)
     return null
   }
 
@@ -44,7 +44,7 @@ const searchUsersInGroup = async (searchTerm, groupId, requestor, returnSelf) =>
 
   if (!response.ok) {
     const errorData = await response.json()
-    logger('error', ['searchUsersInGroup', `Failed to search for users in groupId '${groupId}' with searchTerm '${searchTerm}'. Status: ${response.status} - ${response.statusText}:`, errorData])
+    logger.errorException(errorData, "searchUsersInGroup - Failed to search for users in groupId '{GroupId}' with searchTerm '{SearchTerm}'. Status: {Status} - {StatusText}", groupId, searchTerm, response.status, response.statusText)
     return null
   }
 
@@ -70,7 +70,7 @@ const getOwnedObjects = async (upn) => {
 
   if (!response.ok) {
     const errorData = await response.json()
-    logger('error', ['getOwnedObjects', `Failed to get owned objects for upn '${upn}'. Status: ${response.status} - ${response.statusText}:`, errorData])
+    logger.errorException(errorData, "getOwnedObjects - Failed to get owned objects for upn '{Upn}'. Status: {Status} - {StatusText}", upn, response.status, response.statusText)
     return null
   }
 
@@ -94,7 +94,7 @@ const getGroups = async (id) => {
 
   if (!response.ok) {
     const errorData = await response.json()
-    logger('error', ['getGroups', `Failed to get group with id '${id}'. Status: ${response.status} - ${response.statusText}:`, errorData])
+    logger.errorException(errorData, "getGroups - Failed to get group with id '{Id}'. Status: {Status} - {StatusText}", id, response.status, response.statusText)
     return null
   }
 
@@ -120,10 +120,10 @@ const getGroupOwners = async (groupId, substitutionId = undefined) => {
 
   if (!response.ok) {
     const errorData = await response.json()
-    logger('error', ['getGroupOwners', `Failed to get group owners for groupId '${groupId}'. Status: ${response.status} - ${response.statusText}:`, errorData])
+    logger.errorException(errorData, "getGroupOwners - Failed to get group owners for groupId '{GroupId}'. Status: {Status} - {StatusText}", groupId, response.status, response.statusText)
 
     if (response.status === 404 && substitutionId) {
-      logger('warn', ['getGroupOwners', `Attempting to remove substitution with id ${substitutionId}`])
+      logger.warn('getGroupOwners - Attempting to remove substitution with id {SubstitutionId}', substitutionId)
       await removeSubstitution(substitutionId)
     }
 
@@ -150,7 +150,7 @@ const getGroupMembers = async (id) => {
 
   if (!response.ok) {
     const errorData = await response.json()
-    logger('error', ['getGroupMembers', `Failed to get members from groupId '${id}'. Status: ${response.status} - ${response.statusText}:`, errorData])
+    logger.errorException(errorData, "getGroupMembers - Failed to get members from groupId '{Id}'. Status: {Status} - {StatusText}", id, response.status, response.statusText)
     return null
   }
 
@@ -191,7 +191,7 @@ const addGroupOwner = async (groupId, userId) => {
 
   if (!response.ok) {
     const errorData = await response.json()
-    logger('error', ['addGroupOwner', `Failed to add userId '${userId}' as a group owner of groupId '${groupId}'. Status: ${response.status} - ${response.statusText}:`, errorData])
+    logger.errorException(errorData, "addGroupOwner - Failed to add userId '{UserId}' as a group owner of groupId '{GroupId}'. Status: {Status} - {StatusText}", userId, groupId, response.status, response.statusText)
     return null
   }
 
@@ -215,7 +215,7 @@ const removeGroupOwner = async (groupId, userId) => {
 
   if (!response.ok) {
     const errorData = await response.json()
-    logger('error', ['removeGroupOwner', `Failed to remove userId '${userId}' as an owner of groupId '${groupId}'. Status: ${response.status} - ${response.statusText}:`, errorData])
+    logger.errorException(errorData, "removeGroupOwner - Failed to remove userId '{UserId}' as an owner of groupId '{GroupId}'. Status: {Status} - {StatusText}", userId, groupId, response.status, response.statusText)
     return null
   }
 
@@ -239,7 +239,7 @@ const removeGroupMember = async (groupId, userId) => {
 
   if (!response.ok) {
     const errorData = await response.json()
-    logger('error', ['removeGroupMember', `Failed to remove userId '${userId}' as a member of groupId '${groupId}'. Status: ${response.status} - ${response.statusText}:`, errorData])
+    logger.errorException(errorData, "removeGroupMember - Failed to remove userId '{UserId}' as a member of groupId '{GroupId}'. Status: {Status} - {StatusText}", userId, groupId, response.status, response.statusText)
     return null
   }
 
@@ -261,7 +261,7 @@ const getAdditionalRequestorInfo = async (requestor) => {
 
   if (!response.ok) {
     const errorData = await response.json()
-    logger('error', ['getAdditionalRequestorInfo', `Failed to get user with upn '${requestor.upn}'. Status: ${response.status} - ${response.statusText}:`, errorData])
+    logger.errorException(errorData, "getAdditionalRequestorInfo - Failed to get user with upn '{RequestorUpn}'. Status: {Status} - {StatusText}", requestor.upn, response.status, response.statusText)
     return null
   }
 

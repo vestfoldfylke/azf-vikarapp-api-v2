@@ -1,7 +1,7 @@
 const { app } = require('@azure/functions')
 const { NODE_ENV, mongoDB } = require('../../config')
 const { logToDB } = require('../lib/jobs/logToDB')
-const { logger } = require('@vtfk/logger')
+const { logger } = require('@vestfoldfylke/loglady')
 const { prepareRequest } = require('../lib/auth/requestor')
 const { getMongoClient } = require('../lib/mongoClient')
 
@@ -16,7 +16,7 @@ app.http('logs', {
       // Make sure all the required properties are provided
       ({ requestor } = await prepareRequest(request))
       if (NODE_ENV !== 'development' && !requestor.roles.includes('App.Admin')) {
-        logger('warn', [logPrefix, 'Unauthorized, missing role \'App.Admin\''])
+        logger.warn(`${logPrefix} - Unauthorized, missing role 'App.Admin'`)
         throw new Error('Unauthorized, missing role \'App.Admin\'')
       }
 
@@ -37,7 +37,7 @@ app.http('logs', {
       // Return the logs
       return { status: 200, jsonBody: logs }
     } catch (error) {
-      logger('error', [logPrefix, 'An error occured while trying to get the logs', error])
+      logger.errorException(error, `${logPrefix} - An error occured while trying to get the logs`)
       await logToDB('error', error, request, context, requestor)
       return { status: 500, jsonBody: error }
     }

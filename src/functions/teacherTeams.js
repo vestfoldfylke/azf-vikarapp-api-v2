@@ -2,7 +2,7 @@ const { app } = require('@azure/functions')
 const { getUser, getOwnedObjects } = require('../lib/callGraph')
 const { prepareRequest } = require('../lib/auth/requestor')
 const { getPermittedLocations } = require('../lib/jobs/getPermittedLocations')
-const { logger } = require('@vtfk/logger')
+const { logger } = require('@vestfoldfylke/loglady')
 const { logToDB } = require('../lib/jobs/logToDB')
 
 app.http('teacherTeams', {
@@ -21,11 +21,11 @@ app.http('teacherTeams', {
         const user = await getUser(request.params.upn)
 
         if (!user) {
-          logger('error', [logPrefix, `User not found with upn ${request.params.upn}`])
+          logger.error(`${logPrefix} - User not found with upn {Upn}`, request.params.upn)
           throw new Error(`User not found with upn ${request.params.upn}`)
         }
         if (!user.companyName) {
-          logger('error', [logPrefix, `Was not able to get the company name for user with upn ${request.params.upn}`])
+          logger.error(`${logPrefix} - Was not able to get the company name for user with upn {Upn}`, request.params.upn)
           throw new Error(`Was not able to get the company name for user with upn ${request.params.upn}`)
         }
         // Get the locations the user is permitted to see
@@ -34,7 +34,7 @@ app.http('teacherTeams', {
 
         // Check if the user is permitted to see the requested teams
         if (!permittedLocationNames.includes(user.companyName)) {
-          logger('error', [logPrefix, `User with upn ${request.params.upn} is not permitted to see the requested teams`])
+          logger.error(`${logPrefix} - User with upn {Upn} is not permitted to see the requested teams`, request.params.upn)
           throw new Error(`User with upn ${request.params.upn} is not permitted to see the requested teams`)
         }
       }
@@ -42,17 +42,17 @@ app.http('teacherTeams', {
       let ownedObjects = await getOwnedObjects(request.params.upn)
 
       // Filter out any resources that is not an SDS team
-      logger('info', [logPrefix, `Removing any resources that is not an SDS team for user with upn ${request.params.upn}`])
+      logger.info(`${logPrefix} - Removing any resources that is not an SDS team for user with upn {Upn}`, request.params.upn)
       ownedObjects = ownedObjects.filter(object => object.mail && object.mail.toLowerCase().startsWith('section_'))
       // Filter out any resources that is expired
-      logger('info', [logPrefix, `Removing any expired resources for user with upn ${request.params.upn}`])
+      logger.info(`${logPrefix} - Removing any expired resources for user with upn {Upn}`, request.params.upn)
       ownedObjects = ownedObjects.filter(object => !object.displayName.toLowerCase().startsWith('exp'))
 
       // Return the teams
-      logger('info', [logPrefix, `Found ${ownedObjects.length} teams for user with upn ${request.params.upn}`])
+      logger.info(`${logPrefix} - Found {OwnedObjectCount} teams for user with upn {Upn}`, ownedObjects.length, request.params.upn)
       return { status: 200, jsonBody: ownedObjects }
     } catch (error) {
-      logger('error', [logPrefix, 'An error occured while trying to get the teacher teams', error?.message || JSON.stringify(error)])
+      logger.errorException(error, `${logPrefix} - An error occured while trying to get the teacher teams`)
       await logToDB('error', error, request, context, requestor)
       return { status: 500, jsonBody: { error: error?.message || error } }
     }

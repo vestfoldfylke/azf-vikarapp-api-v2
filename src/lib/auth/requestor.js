@@ -1,12 +1,10 @@
 const config = require('../../../config')
-const { logger } = require('@vtfk/logger')
+const { logger } = require('@vestfoldfylke/loglady')
 const { auth } = require('./auth')
 const { getAdditionalRequestorInfo } = require('../callGraph')
 
-// Must initate the config before so the logging prefix is set...
-const someConfig = config
-if (someConfig.length > 0) {
-  logger('info', ['prepareRequest', 'Config loaded'])
+if (config.length > 0) {
+  logger.info('prepareRequest - Config loaded')
 }
 // const setupMock = require('../mock/setupMock')
 
@@ -44,7 +42,7 @@ const prepareRequest = async (req, options = {}) => {
       }
     })
     if (missingProps.length > 0) {
-      logger('warn', [logPrefix, `Missing required property: ${missingProps.join(', ')}`])
+      logger.warn(`${logPrefix} - Missing required properties: {@RequiredPropertiesMissing}`, missingProps.join(', '))
       throw new Error(`Missing required property: ${missingProps.join(', ')}`)
     }
   }
@@ -52,7 +50,7 @@ const prepareRequest = async (req, options = {}) => {
   let requestor
   if (options.auth) {
     if (!req) {
-      logger('warn', [logPrefix, 'No request object provided'])
+      logger.warn(`${logPrefix} - No request object provided`)
       throw new Error('No request object provided')
     }
     requestor = await auth(req)
@@ -65,7 +63,7 @@ const prepareRequest = async (req, options = {}) => {
   // Before returning the requestor object, make sure that the requestor has jobTitle, department, officeLocation and company. If not, get them with the graph api
   // This is because the token provided by the azure ad does not always contain these properties
   if (!requestor.jobTitle || !requestor.department || !requestor.officeLocation || !requestor.company) {
-    logger('info', [logPrefix, 'Requestor is missing jobTitle, department, officeLocation or company, getting them with the graph api'])
+    logger.info(`${logPrefix} - Requestor is missing jobTitle, department, officeLocation or company, getting them with the graph api`)
     const updatedRequestor = await getAdditionalRequestorInfo(requestor)
     requestor.jobTitle = updatedRequestor.jobTitle
     requestor.department = updatedRequestor.department
@@ -73,7 +71,7 @@ const prepareRequest = async (req, options = {}) => {
     requestor.company = updatedRequestor.companyName
   }
 
-  logger('info', [logPrefix, 'Returning the requestor object'])
+  logger.info(`${logPrefix} - Returning the requestor object`)
   return {
     requestor
   }

@@ -2,7 +2,7 @@ const { app } = require('@azure/functions')
 const config = require('../../config')
 const { activateSubstitutions } = require('../lib/jobs/graphJobs')
 const { logToDB } = require('../lib/jobs/logToDB')
-const { logger } = require('@vtfk/logger')
+const { logger } = require('@vestfoldfylke/loglady')
 
 app.timer('activateSubstitutions', {
   schedule: '0 */15 * * * *',
@@ -11,7 +11,7 @@ app.timer('activateSubstitutions', {
     try {
       await activateSubstitutions(false, undefined, context)
     } catch (error) {
-      logger('error', ['activateSubstitutions', 'An error occured while trying to activate substitutions', error?.message || error])
+      logger.errorException(error, 'activateSubstitutions - An error occured while trying to activate substitutions')
       await logToDB('error', error, undefined, context)
     }
   }

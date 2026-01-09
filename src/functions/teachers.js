@@ -1,6 +1,6 @@
 const { app } = require('@azure/functions')
 const { prepareRequest } = require('../lib/auth/requestor')
-const { logger } = require('@vtfk/logger')
+const { logger } = require('@vestfoldfylke/loglady')
 const { searchUsersInGroup } = require('../lib/callGraph')
 const { logToDB } = require('../lib/jobs/logToDB')
 const { getPermittedLocations } = require('../lib/jobs/getPermittedLocations')
@@ -18,14 +18,14 @@ app.http('teachers', {
       ({ requestor } = await prepareRequest(request, { required: ['searchTerm'] }))
 
       if (!searchGroupId) {
-        logger('error', [logPrefix, 'No searchGroupId provided, make sure its set in the api config'])
+        logger.error(`${logPrefix} - No searchGroupId provided, make sure its set in the api config`)
         throw new Error('No searchGroupId provided, make sure its set in the api config')
       }
 
       // Get the search term from the request
       const { searchTerm } = request.params
       if (!searchTerm) {
-        logger('error', [logPrefix, 'No search term provided'])
+        logger.error(`${logPrefix} - No search term provided`)
         throw new Error('No search term provided')
       }
       // Get the returnSelf from the request, either true or false
@@ -39,7 +39,7 @@ app.http('teachers', {
         const permittedLocations = await getPermittedLocations(requestor.company)
         // Filter out locations the user is not permitted to see, if the user has no permitted locations, return an empty array
         if (!permittedLocations || permittedLocations.length === 0) {
-          logger('warn', [logPrefix, `User with upn ${requestor.upn} is not permitted to see any locations`])
+          logger.warn(`${logPrefix} - User with upn {Upn} is not permitted to see any locations`, requestor.upn)
           users = []
         } else {
           // Filter out the users that are not part of the permitted locations
@@ -51,7 +51,7 @@ app.http('teachers', {
       // Return the users
       return { status: 200, jsonBody: users }
     } catch (error) {
-      logger('error', [logPrefix, 'An error occured while trying to get the teachers', error?.message || JSON.stringify(error)])
+      logger.errorException(error, `${logPrefix} - An error occured while trying to get the teachers`)
       await logToDB('error', error, request, context, requestor)
       return { status: 500, jsonBody: { error: error?.message || error } }
     }

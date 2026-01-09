@@ -1,5 +1,5 @@
 const { mongoDB } = require('../../../config')
-const { logger } = require('@vtfk/logger')
+const { logger } = require('@vestfoldfylke/loglady')
 const { getMongoClient } = require('../mongoClient')
 
 const getPermittedLocations = async (company) => {
@@ -14,18 +14,18 @@ const getPermittedLocations = async (company) => {
 
   // Validate that the school was found and exists
   if (!school) {
-    logger('error', [logPrefix, 'School not found', company])
+    logger.error(`${logPrefix} - School not found for company '{Company}'`, company)
     throw new Error('School not found')
   }
 
   // Add the users own school to the permitted locations
-  logger('info', [logPrefix, 'Add the users own school to the permitted locations'])
+  logger.info(`${logPrefix} - Add the users own school to the permitted locations`)
   if (school._id && school.name) {
     permittedLocations.push({ _id: school._id, name: school.name })
   }
 
   // Add any other permitted schools to the permitted locations
-  logger('info', [logPrefix, 'Add any other permitted schools to the permitted locations'])
+  logger.info(`${logPrefix} - Add any other permitted schools to the permitted locations`)
   if (school.permittedSchools && Array.isArray(school.permittedSchools)) {
     for (const location of school.permittedSchools) {
       if (location._id && location.name) {

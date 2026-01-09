@@ -1,7 +1,7 @@
 const { app } = require('@azure/functions')
 const { deactivateSubstitutions } = require('../lib/jobs/graphJobs')
 const { logToDB } = require('../lib/jobs/logToDB')
-const { logger } = require('@vtfk/logger')
+const { logger } = require('@vestfoldfylke/loglady')
 
 app.http('deactivateSubstitutions-dev', {
   methods: ['GET'],
@@ -10,7 +10,7 @@ app.http('deactivateSubstitutions-dev', {
     try {
       await deactivateSubstitutions(false, undefined, undefined, context)
     } catch (error) {
-      logger('error', ['deactivateSubstitutions-dev', 'An error occured while trying to deactivate substitutions', error?.message || error])
+      logger.errorException(error, 'deactivateSubstitutions-dev - An error occured while trying to deactivate substitutions')
       await logToDB('error', error?.message || error, undefined, context)
     }
   }

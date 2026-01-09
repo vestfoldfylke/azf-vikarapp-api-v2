@@ -1,7 +1,7 @@
 const { ConfidentialClientApplication } = require('@azure/msal-node')
 const NodeCache = require('node-cache')
 const { azureApplication } = require('../../../config')
-const { logger } = require('@vtfk/logger')
+const { logger } = require('@vestfoldfylke/loglady')
 
 const cache = new NodeCache({ stdTTL: 3000 })
 
@@ -10,11 +10,10 @@ module.exports = async (scope, options = { forceNew: false }) => {
   const logPrefix = 'getGraphToken'
 
   if (!options.forceNew && cache.get(cacheKey)) {
-    logger('info', [logPrefix, 'found valid token in cache, will use that instead of fetching new'])
     return (cache.get(cacheKey))
   }
 
-  logger('info', [logPrefix, 'no token in cache, fetching new from Microsoft'])
+  logger.info(`${logPrefix} - no token in cache, fetching new from Microsoft`)
   const config = {
     auth: {
       clientId: azureApplication.clientId,
@@ -31,9 +30,9 @@ module.exports = async (scope, options = { forceNew: false }) => {
 
   const token = await cca.acquireTokenByClientCredential(clientCredentials)
   const expires = Math.floor((token.expiresOn.getTime() - new Date()) / 1000)
-  logger('info', [logPrefix, `Got token from Microsoft, expires in ${expires} seconds.`])
+  logger.info(`${logPrefix} - Got token from Microsoft, expires in {Expires} seconds.`, expires)
   cache.set(cacheKey, token.accessToken, expires)
-  logger('info', [logPrefix, 'Token stored in cache'])
+  logger.info(`${logPrefix} - Token stored in cache`)
 
   return token.accessToken
 }

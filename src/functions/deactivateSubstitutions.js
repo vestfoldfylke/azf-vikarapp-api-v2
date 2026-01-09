@@ -2,7 +2,7 @@ const { app } = require('@azure/functions')
 const config = require('../../config')
 const { deactivateSubstitutions } = require('../lib/jobs/graphJobs')
 const { logToDB } = require('../lib/jobs/logToDB')
-const { logger } = require('@vtfk/logger')
+const { logger } = require('@vestfoldfylke/loglady')
 
 app.timer('deactivateSubstitutions', {
   schedule: '30 */15 * * * *', // every 15th minute at 30 seconds past the minute
@@ -12,7 +12,7 @@ app.timer('deactivateSubstitutions', {
     try {
       await deactivateSubstitutions(false, undefined, undefined, context)
     } catch (error) {
-      logger('error', ['deactivateSubstitutions', 'An error occured while trying to deactivate substitutions', error?.message || error])
+      logger.errorException(error, 'deactivateSubstitutions - An error occured while trying to deactivate substitutions')
       await logToDB('error', error, undefined, context)
     }
   }

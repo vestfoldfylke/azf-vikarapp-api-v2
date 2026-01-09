@@ -1,10 +1,10 @@
 const { mongoDB } = require('../../../config')
-const { logger } = require('@vtfk/logger')
+const { logger } = require('@vestfoldfylke/loglady')
 const { getMongoClient } = require('../mongoClient')
 
 const logToDB = async (type = 'info', data, request, context, requestor) => {
   if (!data) {
-    logger('error', ['logToDB', 'Missing required parameter: data'])
+    logger.error('logToDB - Missing required parameter: data')
     throw new Error('Missing required parameter: data')
   }
   if (data instanceof Error) {
@@ -50,8 +50,7 @@ const logToDB = async (type = 'info', data, request, context, requestor) => {
     // Save the entry
     await mongoClient.db(mongoDB.DB_NAME).collection(mongoDB.LOG_COLLECTION).insertOne(logEntry)
   } catch (error) {
-    // Logger her
-    logger('error', ['logToDB', 'An error occured while trying to log to the database', error?.message || JSON.stringify(error)])
+    logger.errorException(error, 'logToDB - An error occured while trying to log to the database')
     throw new Error('An error occured while trying to log to the database')
   }
 }
