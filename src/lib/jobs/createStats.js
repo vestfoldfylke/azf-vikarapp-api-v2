@@ -1,5 +1,4 @@
 const { fylke, statistics } = require('../../../config')
-const { default: axios } = require('axios')
 const { logger } = require('@vtfk/logger')
 
 module.exports = async (stat) => {
@@ -15,13 +14,21 @@ module.exports = async (stat) => {
     status: stat.status,
     type: 'VikarApp'
   }
-  const data = await axios.post(`${statistics.url}/Stats`, statObj, { headers: { 'x-functions-key': `${statistics.key}` } })
 
-  if (data.status === 200) {
-    logger('info', [logPrefix, 'Statistics created'])
-    return true
-  } else {
-    logger('warn', [logPrefix, 'Creating statistics failed'])
+  const response = await fetch(`${statistics.url}/Stats`, {
+    method: 'POST',
+    headers: {
+      'X-Functions-Key': statistics.key
+    },
+    body: JSON.stringify(statObj)
+  })
+
+  if (!response.ok) {
+    const errorData = await response.json()
+    logger('error', [logPrefix, `Failed to create statistics for ${stat.status} substitution. Status: ${response.status} - ${response.statusText}:`, statObj, '-> ErrorData:', errorData])
     return false
   }
+
+  logger('info', [logPrefix, `Successfully created statistics for ${stat.status} substitution. Status: ${response.status} :`, statObj])
+  return response.status === 200
 }

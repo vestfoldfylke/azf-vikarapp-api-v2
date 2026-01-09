@@ -1,4 +1,3 @@
-const axios = require('axios').default
 const { logger } = require('@vtfk/logger')
 const getAccessToken = require('./auth/get-endtraid-token')
 const { azureApplication } = require('../../config')
@@ -8,20 +7,23 @@ const getUser = async (upn) => {
   // Input validation
   if (!upn) throw new Error('Cannot search for a user if \'upn\' is not specified')
 
-  // Prepare the request
-  const request = {
+  const accessToken = await getAccessToken(azureApplication.scope)
+  const response = await fetch(`https://graph.microsoft.com/v1.0/users/${upn}?$select=id,displayName,givenName,surname,userPrincipalName,companyName,officeLocation,preferredLanguage,mail,jobTitle,mobilePhone,businessPhones`, {
+    method: 'GET',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${await getAccessToken(azureApplication.scope)}`
-    },
-    url: `https://graph.microsoft.com/v1.0/users/${upn}?$select=id,displayName,givenName,surname,userPrincipalName,companyName,officeLocation,preferredLanguage,mail,jobTitle,mobilePhone,businessPhones`
+      Authorization: `Bearer ${accessToken}`
+    }
+  })
+
+  if (!response.ok) {
+    const errorData = await response.json()
+    logger('error', ['getUser', `Failed to get user with upn '${upn}'. Status: ${response.status} - ${response.statusText}:`, errorData])
+    return null
   }
 
-  // Make the request and normalize the data
-  let { data } = await axios.request(request)
-  if (data?.value) data = data.value
-
-  return data
+  const data = await response.json()
+  return data.value ? data.value : data
 }
 
 const searchUsersInGroup = async (searchTerm, groupId, requestor, returnSelf) => {
@@ -30,128 +32,130 @@ const searchUsersInGroup = async (searchTerm, groupId, requestor, returnSelf) =>
   if (!groupId) throw new Error('Cannot search for a user if \'groupId\' is not specified')
   if (!requestor) throw new Error('Cannot search for a user if \'requestor\' is not specified')
 
-  // Prepare the request
-  const request = {
-    method: 'get',
+  const accessToken = await getAccessToken(azureApplication.scope)
+  const response = await fetch(`https://graph.microsoft.com/v1.0/groups/${groupId}/members?$search="displayName:${searchTerm}"&$select=id,displayName,jobTitle,officeLocation,userPrincipalName,companyName&$orderby=displayName`, {
+    method: 'GET',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${await getAccessToken(azureApplication.scope)}`,
+      Authorization: `Bearer ${accessToken}`,
       ConsistencyLevel: 'eventual'
-    },
-    url: `https://graph.microsoft.com/v1.0/groups/${groupId}/members?$search="displayName:${searchTerm}"&$select=id,displayName,jobTitle,officeLocation,userPrincipalName,companyName&$orderby=displayName`
+    }
+  })
+
+  if (!response.ok) {
+    const errorData = await response.json()
+    logger('error', ['searchUsersInGroup', `Failed to search for users in groupId '${groupId}' with searchTerm '${searchTerm}'. Status: ${response.status} - ${response.statusText}:`, errorData])
+    return null
   }
 
-  // Make the request and normalize the data
-  let { data } = await axios.request(request)
-  if (data?.value) data = data.value
+  const data = await response.json()
+  const dataValue = data.value ? data.value : data
 
-  // If not should not return self
-  if (!returnSelf) data = data.filter((i) => i.userPrincipalName !== requestor.upn)
-
-  return data
+  return !returnSelf ? dataValue.filter((i) => i.userPrincipalName !== requestor.upn) : dataValue
 }
 
 const getOwnedObjects = async (upn) => {
   // Input validation
   if (!upn) throw new Error('Cannot search for a user if \'upn\' is not specified')
 
-  // Prepare the request
-  const request = {
-    method: 'get',
+  const accessToken = await getAccessToken(azureApplication.scope)
+  const response = await fetch(`https://graph.microsoft.com/v1.0/users/${upn}/ownedObjects?$select=id,displayName,mail,description`, {
+    method: 'GET',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${await getAccessToken(azureApplication.scope)}`,
+      Authorization: `Bearer ${accessToken}`,
       ConsistencyLevel: 'eventual'
-    },
-    url: `https://graph.microsoft.com/v1.0/users/${upn}/ownedObjects?$select=id,displayName,mail,description`
+    }
+  })
+
+  if (!response.ok) {
+    const errorData = await response.json()
+    logger('error', ['getOwnedObjects', `Failed to get owned objects for upn '${upn}'. Status: ${response.status} - ${response.statusText}:`, errorData])
+    return null
   }
 
-  // Make the request and normalize the data
-  let { data } = await axios.request(request)
-  if (data?.value) data = data.value
-
-  return data
+  const data = await response.json()
+  return data.value ? data.value : data
 }
 
 const getGroups = async (id) => {
   // Input validation
-  if (!id) throw new Error('Cannot search for a user if \'id\' is not specified')
+  if (!id) throw new Error('Cannot search for a group if \'id\' is not specified')
 
-  // Prepare the request
-  const request = {
-    method: 'get',
+  const accessToken = await getAccessToken(azureApplication.scope)
+  const response = await fetch(`https://graph.microsoft.com/v1.0/groups/${id}`, {
+    method: 'GET',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${await getAccessToken(azureApplication.scope)}`,
+      Authorization: `Bearer ${accessToken}`,
       ConsistencyLevel: 'eventual'
-    },
-    url: `https://graph.microsoft.com/v1.0/groups/${id}`
+    }
+  })
+
+  if (!response.ok) {
+    const errorData = await response.json()
+    logger('error', ['getGroups', `Failed to get group with id '${id}'. Status: ${response.status} - ${response.statusText}:`, errorData])
+    return null
   }
 
-  // Make the request and normalize the data
-  let { data } = await axios.request(request)
-  if (data?.value) data = data.value
-
-  return data
+  const data = await response.json()
+  return data.value ? data.value : data
 }
 
 const getGroupOwners = async (groupId, substitutionId = undefined) => {
   // Input validation
   if (!groupId) {
-    throw new Error('Cannot search for a user if \'id\' is not specified')
+    throw new Error('Cannot search for a group if \'groupId\' is not specified')
   }
 
-  // Prepare the request
-  const request = {
-    method: 'get',
+  const accessToken = await getAccessToken(azureApplication.scope)
+  const response = await fetch(`https://graph.microsoft.com/v1.0/groups/${groupId}/owners`, {
+    method: 'GET',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${await getAccessToken(azureApplication.scope)}`,
+      Authorization: `Bearer ${accessToken}`,
       ConsistencyLevel: 'eventual'
-    },
-    url: `https://graph.microsoft.com/v1.0/groups/${groupId}/owners`
-  }
+    }
+  })
 
-  // Make the request and normalize the data
-  try {
-    let { data } = await axios.request(request)
-    if (data?.value) data = data.value
+  if (!response.ok) {
+    const errorData = await response.json()
+    logger('error', ['getGroupOwners', `Failed to get group owners for groupId '${groupId}'. Status: ${response.status} - ${response.statusText}:`, errorData])
 
-    return data
-  } catch (error) {
-    logger('error', ['getGroupOwners', 'An error occured while trying to get the owners of a group', error?.message || error])
-    if (error?.response?.status === 404) {
-      logger('warn', ['getGroupOwners', `The group with id '${groupId}' could not be found`])
-      if (substitutionId) {
-        logger('warn', ['getGroupOwners', `Attempting to remove substitution with id ${substitutionId}.`])
-        await removeSubstitution(substitutionId)
-      }
+    if (response.status === 404 && substitutionId) {
+      logger('warn', ['getGroupOwners', `Attempting to remove substitution with id ${substitutionId}`])
+      await removeSubstitution(substitutionId)
     }
 
-    throw error
+    return null
   }
+
+  const data = await response.json()
+  return data.value ? data.value : data
 }
 
 const getGroupMembers = async (id) => {
   // Input validation
   if (!id) throw new Error('Cannot search for a user if \'id\' is not specified')
 
-  // Prepare the request
-  const request = {
-    method: 'get',
+  const accessToken = await getAccessToken(azureApplication.scope)
+  const response = await fetch(`https://graph.microsoft.com/v1.0/groups/${id}/members`, {
+    method: 'GET',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${await getAccessToken(azureApplication.scope)}`,
+      Authorization: `Bearer ${accessToken}`,
       ConsistencyLevel: 'eventual'
-    },
-    url: `https://graph.microsoft.com/v1.0/groups/${id}/members`
+    }
+  })
+
+  if (!response.ok) {
+    const errorData = await response.json()
+    logger('error', ['getGroupMembers', `Failed to get members from groupId '${id}'. Status: ${response.status} - ${response.statusText}:`, errorData])
+    return null
   }
 
-  // Make the request and normalize the data
-  let { data } = await axios.request(request)
-  if (data?.value) data = data.value
-
-  return data
+  const data = await response.json()
+  return data.value ? data.value : data
 }
 
 const addGroupOwner = async (groupId, userId) => {
@@ -167,30 +171,31 @@ const addGroupOwner = async (groupId, userId) => {
   let owners = []
   try {
     owners = await getGroupOwners(groupId)
-    if (!owners) throw new Error(`The team '${groupId}' could not be found`)
   } catch { throw new Error(`The team '${groupId}' could not be found`) }
+  if (!owners) throw new Error(`The team '${groupId}' could not be found`)
 
   // Check if the user is already a owner
   const existing = owners.find((i) => i.id === userId)
   if (existing) return { message: 'The user is already a owner' }
 
-  // Prepare the request
-  const request = {
-    method: 'post',
+  const accessToken = await getAccessToken(azureApplication.scope)
+  const response = await fetch(`https://graph.microsoft.com/v1.0/groups/${groupId}/owners/$ref`, {
+    method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${await getAccessToken(azureApplication.scope)}`,
+      Authorization: `Bearer ${accessToken}`,
       ConsistencyLevel: 'eventual'
     },
-    url: `https://graph.microsoft.com/v1.0/groups/${groupId}/owners/$ref`,
-    data: {
-      '@odata.id': `https://graph.microsoft.com/v1.0/users/${userId}`
-    }
+    body: JSON.stringify({ '@odata.id': `https://graph.microsoft.com/v1.0/users/${userId}` })
+  })
+
+  if (!response.ok) {
+    const errorData = await response.json()
+    logger('error', ['addGroupOwner', `Failed to add userId '${userId}' as a group owner of groupId '${groupId}'. Status: ${response.status} - ${response.statusText}:`, errorData])
+    return null
   }
 
-  // Make the request
-  const { data } = await axios.request(request)
-  return data
+  return await response.text()
 }
 
 const removeGroupOwner = async (groupId, userId) => {
@@ -198,21 +203,23 @@ const removeGroupOwner = async (groupId, userId) => {
   if (!groupId) throw new Error('Cannot search for a user if \'groupId\' is not specified')
   if (!userId) throw new Error('Cannot search for a user if \'userId\' is not specified')
 
-  // Prepare the request
-  const request = {
-    method: 'delete',
+  const accessToken = await getAccessToken(azureApplication.scope)
+  const response = await fetch(`https://graph.microsoft.com/v1.0/groups/${groupId}/owners/${userId}/$ref`, {
+    method: 'DELETE',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${await getAccessToken(azureApplication.scope)}`,
+      Authorization: `Bearer ${accessToken}`,
       ConsistencyLevel: 'eventual'
-    },
-    url: `https://graph.microsoft.com/v1.0/groups/${groupId}/owners/${userId}/$ref`
+    }
+  })
+
+  if (!response.ok) {
+    const errorData = await response.json()
+    logger('error', ['removeGroupOwner', `Failed to remove userId '${userId}' as an owner of groupId '${groupId}'. Status: ${response.status} - ${response.statusText}:`, errorData])
+    return null
   }
 
-  // Make the request
-  const { data } = await axios.request(request)
-
-  return data
+  return await response.text()
 }
 
 const removeGroupMember = async (groupId, userId) => {
@@ -220,42 +227,46 @@ const removeGroupMember = async (groupId, userId) => {
   if (!groupId) throw new Error('Cannot search for a user if \'groupId\' is not specified')
   if (!userId) throw new Error('Cannot search for a user if \'userId\' is not specified')
 
-  // Prepare the request
-  const request = {
-    method: 'delete',
+  const accessToken = await getAccessToken(azureApplication.scope)
+  const response = await fetch(`https://graph.microsoft.com/v1.0/groups/${groupId}/members/${userId}/$ref`, {
+    method: 'DELETE',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${await getAccessToken(azureApplication.scope)}`,
+      Authorization: `Bearer ${accessToken}`,
       ConsistencyLevel: 'eventual'
-    },
-    url: `https://graph.microsoft.com/v1.0/groups/${groupId}/members/${userId}/$ref`
+    }
+  })
+
+  if (!response.ok) {
+    const errorData = await response.json()
+    logger('error', ['removeGroupMember', `Failed to remove userId '${userId}' as a member of groupId '${groupId}'. Status: ${response.status} - ${response.statusText}:`, errorData])
+    return null
   }
 
-  // Make the request
-  const { data } = await axios.request(request)
-
-  return data
+  return await response.text()
 }
 
 const getAdditionalRequestorInfo = async (requestor) => {
   // Input validation
   if (!requestor) throw new Error('Cannot search for a user if \'requestor\' is not specified')
 
-  // Prepare the request
-  const request = {
-    method: 'get',
+  const accessToken = await getAccessToken(azureApplication.scope)
+  const response = await fetch(`https://graph.microsoft.com/v1.0/users/${requestor.upn}?$select=jobTitle,department,officeLocation,companyName`, {
+    method: 'GET',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${await getAccessToken(azureApplication.scope)}`
-    },
-    url: `https://graph.microsoft.com/v1.0/users/${requestor.upn}?$select=jobTitle,department,officeLocation,companyName`
+      Authorization: `Bearer ${accessToken}`
+    }
+  })
+
+  if (!response.ok) {
+    const errorData = await response.json()
+    logger('error', ['getAdditionalRequestorInfo', `Failed to get user with upn '${requestor.upn}'. Status: ${response.status} - ${response.statusText}:`, errorData])
+    return null
   }
 
-  // Make the request and normalize the data
-  let { data } = await axios.request(request)
-  if (data?.value) data = data.value
-
-  return data
+  const data = await response.json()
+  return data.value ? data.value : data
 }
 
 module.exports = {
