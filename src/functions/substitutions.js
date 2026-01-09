@@ -281,7 +281,7 @@ app.http('substitutions', {
           if (activeSubstitution) {
             logger.info(`${logPrefix} - The selected substitution with id {ActiveSubstitutionId} is currently active and will be renewed`, activeSubstitution._id)
             renewedSubstitutions.push({
-              extendedSubstitution: {...substitution},
+              extendedSubstitution: { ...substitution },
               _id: activeSubstitution._id, // Document ID from mongoDB
               expirationTimestamp
             })
