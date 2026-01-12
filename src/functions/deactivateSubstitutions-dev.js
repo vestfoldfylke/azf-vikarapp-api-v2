@@ -1,17 +1,17 @@
-const { app } = require('@azure/functions')
-const { deactivateSubstitutions } = require('../lib/jobs/graphJobs')
-const { logToDB } = require('../lib/jobs/logToDB')
-const { logger } = require('@vestfoldfylke/loglady')
+const { app } = require("@azure/functions");
+const { logger } = require("@vestfoldfylke/loglady");
+const { deactivateSubstitutions } = require("../lib/jobs/graphJobs");
+const { logToDB } = require("../lib/jobs/logToDB");
 
-app.http('deactivateSubstitutions-dev', {
-  methods: ['GET'],
-  authLevel: 'anonymous',
-  handler: async (request, context) => {
+app.http("deactivateSubstitutions-dev", {
+  methods: ["GET"],
+  authLevel: "anonymous",
+  handler: async (_request, context) => {
     try {
-      await deactivateSubstitutions(false, undefined, undefined, context)
+      await deactivateSubstitutions(false, undefined, undefined, context);
     } catch (error) {
-      logger.errorException(error, 'deactivateSubstitutions-dev - An error occured while trying to deactivate substitutions')
-      await logToDB('error', error?.message || error, undefined, context)
+      logger.errorException(error, "deactivateSubstitutions-dev - An error occured while trying to deactivate substitutions");
+      await logToDB("error", error?.message || error, undefined, context);
     }
   }
-})
+});

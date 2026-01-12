@@ -1,25 +1,19 @@
-/*
-  Import dependencies
-*/
-const apikey = require('./apikey')
-const azuread = require('./azuread')
+const apikey = require("./apikey");
+const azuread = require("./azuread");
 
-/*
-  Auth function
-*/
 /**
  * Auth's the request
  * @param {object} req Azure function request
  * @returns
  */
 const auth = async (req) => {
-  let requestor = {}
+  let requestor = {};
 
   // If test and a requestor has been provided, return that
-  if (process.env.NODE_ENV === 'test' && req.requestor) return req.requestor
+  if (process.env.NODE_ENV === "test" && req.requestor) return req.requestor;
 
-  if (req.headers.get('authorization')) {
-    const token = await azuread(req.headers.get('authorization'))
+  if (req.headers.get("authorization")) {
+    const token = await azuread(req.headers.get("authorization"));
     requestor = {
       id: token.oid,
       sid: token.onprem_sid,
@@ -33,20 +27,20 @@ const auth = async (req) => {
       officeLocation: token.officeLocation,
       company: token.companyName,
       roles: token.roles || [],
-      scopes: token.scp?.split(' ') || []
-    }
-  } else if (req.headers.get('x-api-key')) {
-    apikey(req.headers.get('x-api-key'))
-    requestor.name = 'apikey'
-    requestor.id = 'apikey'
-    requestor.department = 'apikey'
-    requestor.email = 'apikey@vtfk.no'
+      scopes: token.scp?.split(" ") || []
+    };
+  } else if (req.headers.get("x-api-key")) {
+    apikey(req.headers.get("x-api-key"));
+    requestor.name = "apikey";
+    requestor.id = "apikey";
+    requestor.department = "apikey";
+    requestor.email = "apikey@vtfk.no";
   } else {
-    throw new Error('No authentication token provided')
+    throw new Error("No authentication token provided");
   }
-  return requestor
-}
+  return requestor;
+};
 
 module.exports = {
   auth
-}
+};
