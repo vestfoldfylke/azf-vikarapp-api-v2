@@ -1,27 +1,41 @@
-const { fylke, statistics } = require('../../../config')
-const { default: axios } = require('axios')
-const { logger } = require('@vtfk/logger')
+const { logger } = require("@vestfoldfylke/loglady");
+const { fylke, statistics } = require("../../../config");
 
 module.exports = async (stat) => {
-  const logPrefix = 'createStats'
-  logger('info', [logPrefix, `Creating statistics for each ${stat.status} substitution`])
+  const logPrefix = "createStats";
+  logger.info(`${logPrefix} - Creating statistics for {Status} substitution`, stat.status);
   const statObj = {
-    system: 'VikarApp',
-    engine: 'azf-vikarapp-api',
+    system: "VikarApp",
+    engine: "azf-vikarapp-api",
     county: fylke.fylke,
-    company: 'OF',
+    company: "OF",
     department: stat.teamId,
     description: stat.description,
     status: stat.status,
-    type: 'VikarApp'
-  }
-  const data = await axios.post(`${statistics.url}/Stats`, statObj, { headers: { 'x-functions-key': `${statistics.key}` } })
+    type: "VikarApp"
+  };
 
-  if (data.status === 200) {
-    logger('info', [logPrefix, 'Statistics created'])
-    return true
-  } else {
-    logger('warn', [logPrefix, 'Creating statistics failed'])
-    return false
+  const response = await fetch(`${statistics.url}/Stats`, {
+    method: "POST",
+    headers: {
+      "X-Functions-Key": statistics.key
+    },
+    body: JSON.stringify(statObj)
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    logger.errorException(
+      errorData,
+      `${logPrefix} - Failed to create statistics for {Status} substitution. ApiStatus: {ApiStatus} - {StatusText} : {@StatObject}`,
+      stat.status,
+      response.status,
+      response.statusText,
+      statObj
+    );
+    return false;
   }
-}
+
+  logger.info(`${logPrefix} - Successfully created statistics for {Status} substitution. ApiStatus: {ApiStatus} : {@StatObject}`, stat.status, response.status, statObj);
+  return response.status === 200;
+};
