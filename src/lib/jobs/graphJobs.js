@@ -68,7 +68,7 @@ const deactivateSubstitutions = async (onlyFirst = false, substitutions, request
           // Remove the member
           logger.info(`${logPrefix} - Remove the substitute {SubstituteId} as member from team {SubstitutionTeamId}`, substitution.substituteId, substitution.teamId);
           await removeGroupMember(substitution.teamId, substitution.substituteId);
-          logger.info(`${logPrefix} - Successfully removed the substitute {SubstituteId} as member from team {SubstitutionTeamId}`, substitution.substituteId);
+          logger.info(`${logPrefix} - Successfully removed the substitute {SubstituteId} as member from team {SubstitutionTeamId}`, substitution.substituteId, substitution.teamId);
         }
       } else {
         logger.info(
