@@ -9,14 +9,14 @@
     "test:fix": "biome check --write"
   },
   "dependencies": {
-    "@azure/functions": "^4.11.0",
-    "@azure/msal-node": "^3.8.4",
+    "@azure/functions": "^4.11.2",
+    "@azure/msal-node": "^3.8.10",
     "@vestfoldfylke/loglady": "^1.5.2",
     "azure-ad-verify-token": "^3.0.3",
-    "mongodb": "^7.0.0",
+    "mongodb": "^7.1.0",
     "node-cache": "^5.1.2"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.3.11"
+    "@biomejs/biome": "2.4.8"
   }
 }
