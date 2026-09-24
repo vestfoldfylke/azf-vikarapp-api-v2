@@ -224,7 +224,7 @@ app.http("substitutions", {
       for (const upn of uniqueTeacherUpns) {
         // Get the teacher from ms graph
         const teacher = await getUser(upn);
-        if (!teacher || !teacher.id) {
+        if (!teacher?.id) {
           logger.error(`${logPrefix} - Could not find the teacher with upn {Upn}`, upn);
           throw new Error(`Could not find the teacher with upn ${upn}`);
         }
@@ -299,11 +299,11 @@ app.http("substitutions", {
             logger.error(`${logPrefix} - The teacher {TeacherUserPrincipalName} does not own the requested team {SubstitutionTeamId}`, teacher.userPrincipalName, substitution.teamId);
             throw new Error(`The teacher ${teacher.userPrincipalName} does not own the requested team ${substitution.teamId}`);
           }
-          if (!team["@odata.type"] || team["@odata.type"].toLowerCase() !== "#microsoft.graph.group") {
+          if (team["@odata.type"]?.toLowerCase() !== "#microsoft.graph.group") {
             logger.error(`${logPrefix} - The requested team {SubstitutionTeamId} is not a valid team`, substitution.teamId);
             throw new Error(`The requested team ${substitution.teamId} is not a valid team`);
           }
-          if (!team.mail || !team.mail.toLowerCase().startsWith("section_")) {
+          if (!team.mail?.toLowerCase().startsWith("section_")) {
             logger.error(`${logPrefix} - The requested team {SubstitutionTeamId} is not a school team`, substitution.teamId);
             throw new Error(`The requested team ${substitution.teamId} is not a school team`);
           }
