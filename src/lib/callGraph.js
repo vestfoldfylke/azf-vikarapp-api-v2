@@ -37,7 +37,7 @@ const searchUsersInGroup = async (searchTerm, groupId, requestor, returnSelf) =>
 
   const accessToken = await getAccessToken(azureApplication.scope);
   const response = await fetch(
-    `https://graph.microsoft.com/v1.0/groups/${groupId}/members?$search="displayName:${searchTerm}"&$select=id,displayName,jobTitle,officeLocation,userPrincipalName,companyName&$orderby=displayName`,
+    `https://graph.microsoft.com/v1.0/groups/${groupId}/transitiveMembers/microsoft.graph.user?$count=true&$search="displayName:${searchTerm}"&$select=id,displayName,jobTitle,officeLocation,userPrincipalName,companyName&$orderby=displayName`,
     {
       method: "GET",
       headers: {
